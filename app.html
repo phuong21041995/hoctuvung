@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Học Mà Chơi - Thế Giới AI Đa Ngữ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap');
+  :root{
+    --bg-sky:#a7e0ff; --bg-grass:#b4f8c8; --primary:#fbe7c6; --secondary:#ffd6a5;
+    --danger:#ff8a80; --ok:#b9f6ca; --text:#3d2a1f; --panel:#ffffffee;
+    --shadow-color: #00000020; --sidebar-bg: #fdfaf4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0; font-family:'Quicksand', sans-serif;}
+  body{
+    background:linear-gradient(135deg, var(--bg-sky), var(--bg-grass));
+    color:var(--text); min-height:100vh;
+    display:flex; overflow: hidden;
+  }
+
+  /* --- BỐ CỤC: Sidebar + Main Content --- */
+  #sidebar{
+    width: 280px; flex-shrink: 0;
+    background: var(--sidebar-bg);
+    padding: 1.5rem; display: flex; flex-direction: column;
+    box-shadow: 4px 0 20px var(--shadow-color); z-index: 10;
+    transition: transform 0.3s ease-in-out;
+  }
+  #main-content{ flex: 1; position: relative; }
+
+  /* --- Sidebar components --- */
+  .sidebar-header { text-align: center; margin-bottom: 2rem;}
+  .sidebar-header h2 { font-size: 1.8rem; }
+  .sidebar-hud { background: #ffffffaa; border-radius: 16px; padding: 1rem; margin-bottom: 1.5rem; }
+  .hud-item { margin-bottom: 0.8rem; font-size: 1.2rem; font-weight: 700; }
+  #lives-display { font-size: 1.5rem; }
+  .sidebar-controls { margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; }
+  #voice-indicator { font-size:.9em; opacity:.8; text-align: center; margin-bottom: 1rem; font-style: italic; }
+  .sidebar-hud, .sidebar-controls { display: none; }
+  .game-active .sidebar-hud, .game-active .sidebar-controls { display: block; }
+
+
+  /* --- Quản lý các màn hình (screen) --- */
+  .screen{
+    position:absolute; inset:0; padding:clamp(1rem, 5vh, 2rem);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transition: opacity .35s ease-in-out, transform .35s ease-in-out;
+    gap:clamp(0.8rem, 2vh, 1.5rem); text-align:center;
+    overflow-y: auto;
+  }
+  .hidden{ opacity:0; transform:scale(.97); pointer-events:none; }
+  
+  /* --- Typography & Buttons --- */
+  h1{font-size:clamp(32px, 4.5vmax, 52px); text-shadow:1px 1px 2px #fff9;}
+  h2{font-size:clamp(24px, 3.5vmax, 40px);}
+  p{font-size:clamp(16px, 1.8vmax, 22px);}
+  .btn{
+    width: 100%; padding:.8em 1.5em; border:none; border-radius:12px;
+    background:var(--primary); font-weight:700; cursor:pointer;
+    box-shadow: 0 4px var(--shadow-color);
+    margin:.3em 0; transition: all .1s ease-out;
+    font-size: clamp(16px, 1.6vmax, 20px);
+  }
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 12px var(--shadow-color); }
+  .btn:active{ transform:translateY(1px); box-shadow:0 2px 4px var(--shadow-color); }
+  .btn.secondary{background:var(--secondary);}
+  .btn.ok{background:#b9f6ca;}
+  .btn.small { padding: 0.6em 1em; font-size: clamp(14px, 1.4vmax, 16px); width: auto; }
+  .btn[disabled]{opacity:.5; cursor:not-allowed; transform:none; box-shadow:none;}
+  input, select {
+    width:min(520px, 90%); padding:.8em; font-size:1.05em; text-align:center;
+    border:3px solid var(--secondary); border-radius:14px; background:#fff; margin-bottom: 1rem;
+  }
+  select { text-align: left; padding: .6em; }
+
+  /* --- Màn hình chọn bộ thẻ & menu --- */
+  .selection-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem; width: 100%; max-width: 1000px;
+  }
+  .menu-card {
+    display:flex; align-items:center; gap:1rem; background:#fff;
+    border-radius:16px; box-shadow:0 8px 20px #0001; padding:1rem; text-align:left;
+  }
+  .menu-card-icon { font-size:2em; }
+  .menu-card-text { flex:1; } .menu-card-text b { font-size:1.1em; } .menu-card-text div { opacity:.8; }
+  .menu-card .btn { width: auto; }
+  
+  /* --- AI Topic Generator --- */
+  .ai-generator {
+    background: #fff; padding: 1.5rem; border-radius: 16px; margin-top: 2rem;
+    box-shadow: 0 8px 25px var(--shadow-color); width: 100%; max-width: 600px;
+  }
+  .ai-generator input { width: 100%; }
+  .ai-generator .btn { margin-top: 0.5rem; }
+  #loading-spinner {
+    display: none; width: 40px; height: 40px; border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--secondary); border-radius: 50%;
+    animation: spin 1s linear infinite; margin: 1rem auto;
+  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  /* === Màn hình GAME === */
+  #game-content{
+    width:100%; height: 100%; display:flex; 
+    align-items:center; justify-content:center;
+    gap:2rem; padding:2rem;
+  }
+  
+  /* --- Thẻ lật & Tỉ lệ ảnh --- */
+  #card-flipper {
+    perspective: 1000px; cursor: pointer;
+    width:min(45vh, 90vw, 450px); height:min(45vh, 90vw, 450px);
+    flex-shrink:0;
+  }
+  .flipper-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+  #card-flipper.is-flipped .flipper-inner { transform: rotateY(180deg); }
+  #animal-display, #card-back {
+    position: absolute; width: 100%; height: 100%;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    border-radius:20px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background: #ffffffc0;
+    box-shadow: 0 8px 25px var(--shadow-color);
+  }
+  #card-back {
+    transform: rotateY(180deg);
+    flex-direction: column; padding: 1.5rem; text-align: center;
+  }
+  #card-back h3 { margin-bottom: 0.2rem; font-size: 1.5em; color: var(--text); }
+  #card-back h4 { margin-bottom: 0.5rem; font-size: 1.1em; opacity: 0.8; }
+  #card-back p { font-size: 1em; }
+  #animal-display img{ width:100%; height:100%; object-fit:contain; }
+  #card-back .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: var(--secondary); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+  @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  /* --- Layout cho các chế độ chơi --- */
+  .game-panel {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 24px;
+    padding: clamp(1rem, 2vw, 2rem);
+    box-shadow: 0 8px 25px var(--shadow-color);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1.5rem;
+  }
+
+  /* Chế độ quiz-name & listen-image */
+  #default-layout { flex: 1; height: 100%; }
+  .actions{ display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; }
+  #media-credit{ font-size:.9em; opacity:.85; }
+  .choices-area, .img-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:.8rem; width:100%; max-width:900px; margin-top:1vh;
+  }
+  .choice-btn { height: auto; min-height: 72px; padding: 0.8em 1em; font-size:1.1em; width: auto; }
+  .img-choice{
+    border-radius:16px; overflow:hidden; background:#fff; border:4px solid transparent;
+    box-shadow:0 8px 22px #0001; height:180px; cursor:pointer; transition: all .2s;
+  }
+  .img-choice:hover { transform:scale(1.03); box-shadow:0 12px 30px #0002; }
+  .img-choice.correct{ border-color:var(--ok); } .img-choice.incorrect{ border-color:var(--danger); }
+  .img-choice img{ width:100%; height:100%; object-fit:contain; }
+  #listen-prompt { font-size: 5em; }
+
+  /* --- Điền chữ --- */
+  #fill-in-panel { display: none; } /* Hide by default */
+
+  /* --- Modals (Bảng xếp hạng, Cài đặt) --- */
+  .modal-overlay{ background:#00000088; z-index: 100; }
+  .modal-box{ background:#fff; padding:1.5rem; border-radius:16px; width:min(420px, 90%); animation: pop-in .3s ease-out; }
+  @keyframes pop-in { from { transform:scale(0.9); opacity:0; } to { transform:scale(1); opacity:1; } }
+  #leaderboard-list { padding-left: 1.5rem; } #leaderboard-list li { margin-bottom: 0.5rem; font-size:1.1em; }
+  .settings-row { display:flex; flex-direction:column; gap:10px; }
+  .settings-row label { display:flex; justify-content:space-between; align-items:center; }
+  .settings-row input[type=range] { flex:1; margin-left:1rem; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="sidebar-header">
+        <h2>Học Mà Chơi</h2>
+        <p>Thế giới AI</p>
+    </div>
+    <div class="sidebar-hud">
+        <div class="hud-item" id="score-display">💯 Điểm: 0</div>
+        <div class="hud-item" id="lives-display">❤️❤️❤️</div>
+    </div>
+    <div id="voice-indicator">🎤 Giọng đọc mặc định</div>
+    <div class="sidebar-controls">
+        <button id="home-btn" class="btn">🏠 Về Menu</button>
+        <button id="settings-btn" class="btn secondary">⚙️ Cài đặt</button>
+        <button id="mute-btn" class="btn secondary">🔊 Tắt tiếng</button>
+        <button id="leaderboard-btn" class="btn secondary">🏆 Xếp hạng</button>
+    </div>
+</div>
+
+<main id="main-content">
+  <!-- START -->
+  <div id="start-screen" class="screen">
+    <h1>Thế Giới AI Đa Ngữ</h1>
+    <p>Nhập tên của bé để bắt đầu!</p>
+    <input id="player-name-input" maxlength="20" placeholder="Tên của bạn ✏️"/>
+    <button id="start-btn" class="btn ok">Bắt đầu ▶️</button>
+  </div>
+  
+  <!-- SET SELECTION -->
+  <div id="set-selection-screen" class="screen hidden">
+      <h2>Chọn một chủ đề có sẵn...</h2>
+      <div id="set-selection-grid" class="selection-grid"></div>
+      
+      <div class="ai-generator">
+        <h2>...Hoặc để AI tạo chủ đề mới! ✨</h2>
+        <p>Nhập một chủ đề bất kỳ (vd: vũ trụ, gia đình, thời tiết...)</p>
+        <input id="topic-input" placeholder="Chủ đề bạn muốn học 🚀" />
+        <button id="generate-set-btn" class="btn ok">Tạo bộ từ vựng</button>
+        <div id="loading-spinner"></div>
+      </div>
+
+      <button id="set-back-btn" class="btn" style="margin-top: 1rem;">⬅️ Quay lại</button>
+  </div>
+
+  <!-- MENU -->
+  <div id="menu-screen" class="screen hidden">
+    <h2 id="menu-title">Chủ đề: ...</h2>
+    
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center; flex-wrap: wrap;">
+        <select id="question-lang">
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="en">🇬🇧 Tiếng Anh</option>
+            <option value="ko">🇰🇷 Tiếng Hàn</option>
+        </select>
+        <span style="font-size: 1.5em; font-weight: bold;">▶️</span>
+        <select id="answer-lang">
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="en" selected>🇬🇧 Tiếng Anh</option>
+            <option value="ko">🇰🇷 Tiếng Hàn</option>
+        </select>
+    </div>
+
+    <div class="selection-grid">
+      <div class="menu-card">
+        <div class="menu-card-icon">🖼️➡️🔤</div>
+        <div class="menu-card-text"><b>Xem hình → chọn tên</b><div>Nhìn hình, chọn tên đúng.</div></div>
+        <button id="mode-quiz-name" class="btn ok small">Chơi</button>
+      </div>
+      <div class="menu-card">
+        <div class="menu-card-icon">🔊➡️🖼️</div>
+        <div class="menu-card-text"><b>Nghe → chọn hình</b><div>Nghe tên rồi chọn hình đúng.</div></div>
+        <button id="mode-listen-image" class="btn ok small">Chơi</button>
+      </div>
+    </div>
+    <button id="menu-back-btn" class="btn">⬅️ Đổi chủ đề</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="game-screen" class="screen hidden">
+    <div id="game-content">
+      <div id="image-panel" class="game-panel">
+          <div id="card-flipper">
+              <div class="flipper-inner">
+                  <div id="animal-display"></div>
+                  <div id="card-back"></div>
+              </div>
+          </div>
+          <div class="actions">
+            <button id="listen-btn" class="btn small">🔊 Đọc</button>
+            <button id="spell-btn" class="btn small">🔤 Đánh vần</button>
+            <button id="sound-btn" class="btn small" disabled>🐾 Âm thanh</button>
+          </div>
+          <div id="media-credit"></div>
+      </div>
+            
+      <div id="default-layout" class="game-panel">
+          <div id="listen-prompt"></div>
+          <div id="choices-area" class="choices-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- END -->
+  <div id="end-screen" class="screen hidden">
+    <h2>Kết thúc!</h2>
+    <p>Điểm cuối cùng của bạn:</p>
+    <h1 id="final-score">0</h1>
+    <button id="restart-btn" class="btn ok">Chơi lại chủ đề này 🔄</button>
+    <button id="to-menu-btn" class="btn">🏠 Về Menu chính</button>
+  </div>
+
+  <!-- MODALS -->
+  <div id="leaderboard-modal" class="screen hidden modal-overlay">
+    <div class="modal-box">
+      <h2>🏆 Bảng Xếp Hạng</h2>
+      <ol id="leaderboard-list"></ol>
+      <button id="close-leaderboard-btn" class="btn">Đóng</button>
+    </div>
+  </div>
+  <div id="settings-modal" class="screen hidden modal-overlay">
+    <div class="modal-box">
+      <h2>Tùy chỉnh</h2>
+      <div class="settings-row">
+        <label>Giọng đọc:
+          <select id="voice-select"><option>Đang tải...</option></select>
+        </label>
+        <label>Tốc độ: <span id="rate-value">1.0</span>
+          <input type="range" id="rate-slider" min="0.7" max="1.3" step="0.05" value="1.0"/>
+        </label>
+        <label>Pitch: <span id="pitch-value">1.0</span>
+          <input type="range" id="pitch-slider" min="0.8" max="1.3" step="0.05" value="1.0"/>
+        </label>
+      </div>
+      <div style="margin-top:1rem; text-align:center;">
+        <button id="save-settings-btn" class="btn ok">Lưu & đóng</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+<script src="vocabulary.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const $ = id => document.getElementById(id);
+    
+    const screens = {
+        start: $('start-screen'), setSelection: $('set-selection-screen'),
+        menu: $('menu-screen'), game: $('game-screen'), end: $('end-screen'),
+        settings: $('settings-modal'), leaderboard: $('leaderboard-modal')
+    };
+    const sidebar = $('sidebar');
+    
+    let state = {
+        player: '', score: 0, lives: 3, muted: false,
+        chosenSetKey: null, mode: null, 
+        questionLang: 'vi', answerLang: 'en',
+        curr: null, can: true, soundUnlocked: false
+    };
+    let settings = { voiceURI: 'auto', rate: 1.0, pitch: 1.0 };
+    let voices = [];
+    const mediaCache = JSON.parse(localStorage.getItem('mediaCache') || '{}');
+    const descriptionCache = JSON.parse(localStorage.getItem('descriptionCache') || '{}');
+
+    const sfx = {
+        click: new Tone.PluckSynth({ volume: -10 }).toDestination(),
+        ok: new Tone.PluckSynth({ volume: -8 }).toDestination(),
+        nope: new Tone.MembraneSynth({ pitchDecay: .1, octaves: 2, volume: -10 }).toDestination()
+    };
+    function playSfx(key) { if(state.muted) return; (sfx[key])?.triggerAttackRelease(key === 'nope' ? 'C2' : 'C5', '8n'); }
+
+    const tts = window.speechSynthesis;
+    
+    function show(screenId) {
+        Object.values(screens).forEach(s => s.classList.add('hidden'));
+        screens[screenId].classList.remove('hidden');
+        if (['game', 'end'].includes(screenId)) sidebar.classList.add('game-active');
+        else if (!['settings', 'leaderboard'].includes(screenId)) sidebar.classList.remove('game-active');
+    }
+
+    function updateHUD() {
+        $('score-display').textContent = `💯 Điểm: ${state.score}`;
+        $('lives-display').innerHTML = '❤️'.repeat(state.lives);
+    }
+
+    function populateSetSelection() {
+        const grid = $('set-selection-grid');
+        grid.innerHTML = '';
+        Object.keys(VOCABULARY_SETS).forEach(key => {
+            const set = VOCABULARY_SETS[key];
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.innerHTML = set.name;
+            btn.onclick = () => {
+                state.chosenSetKey = key;
+                $('menu-title').textContent = `Chủ đề: ${set.name}`;
+                show('menu');
+            };
+            grid.appendChild(btn);
+        });
+    }
+    
+    async function unlockAudio() {
+        if(state.soundUnlocked) return;
+        try {
+            await Tone.start(); await Tone.getContext().resume();
+            sfx.click.triggerAttackRelease('C5', '16n');
+            const u = new SpeechSynthesisUtterance(''); u.volume = 0; tts.speak(u);
+            state.soundUnlocked = true;
+        } catch(e) { console.error("Audio unlock failed", e); }
+    }
+    
+    async function start(mode) {
+        state.mode = mode; state.score = 0; state.lives = 3; updateHUD();
+        await unlockAudio();
+        show('game');
+        next();
+    }
+    
+    function end() {
+        saveHS(state.player, state.score);
+        $('final-score').textContent = state.score;
+        show('end');
+    }
+    
+    async function next() {
+        if (state.lives <= 0) { return end(); }
+        state.can = true;
+        const currentSet = VOCABULARY_SETS[state.chosenSetKey];
+        if (!currentSet || !currentSet.words || currentSet.words.length === 0) {
+            alert('Bộ từ vựng này bị lỗi hoặc rỗng!');
+            show('setSelection');
+            return;
+        }
+        const wordObj = currentSet.words[Math.floor(Math.random() * currentSet.words.length)];
+        
+        const name = wordObj[state.questionLang];
+        const answer = wordObj[state.answerLang];
+        
+        const media = await getMedia(name, wordObj.en);
+        
+        state.curr = { ...wordObj, name, answer, media, audioElem: null };
+
+        const cardFlipper = $('card-flipper');
+        const display = $('animal-display');
+        const cardBack = $('card-back');
+        const choicesArea = $('choices-area');
+        const imagePanel = $('image-panel');
+        const defaultLayout = $('default-layout');
+        const listenPrompt = $('listen-prompt');
+        
+        [choicesArea, imagePanel, defaultLayout].forEach(el => el.style.display = 'flex');
+        cardFlipper.classList.remove('is-flipped');
+        
+        display.innerHTML = '';
+        const img = new Image(); img.src = media.image; img.alt = name; img.referrerPolicy = 'no-referrer';
+        img.onerror = () => { display.innerHTML = '<p>😢 Lỗi ảnh</p>'; };
+        display.appendChild(img);
+        
+        const cachedDesc = descriptionCache[wordObj.vi];
+        cardBack.innerHTML = `<h3>${wordObj.vi}</h3><h4>${wordObj.en} | ${wordObj.ko}</h4><p>${cachedDesc || 'Nhấn để xem thông tin...'}</p>`;
+
+        $('media-credit').innerHTML = media.credit ? `<a href="${media.credit}" target="_blank" rel="noopener">Nguồn ảnh: Wikipedia</a>` : '';
+        $('sound-btn').disabled = !wordObj.sound;
+        if(media.audio){ const a = new Audio(media.audio); a.preload='auto'; a.crossOrigin='anonymous'; state.curr.audioElem=a; }
+
+        defaultLayout.style.display = 'flex';
+        choicesArea.innerHTML = '';
+        choicesArea.className = 'choices-area';
+            
+        if (state.mode === 'quiz-name') {
+            imagePanel.style.display = 'flex';
+            listenPrompt.style.display = 'none';
+            const wrong = currentSet.words.filter(w => w[state.answerLang] !== answer).sort(()=>0.5-Math.random()).slice(0, 3).map(w => w[state.answerLang]);
+            [answer, ...wrong].sort(()=>0.5-Math.random()).forEach(n => {
+                const b=document.createElement('button'); b.className='btn choice-btn'; b.textContent=n;
+                b.onclick=()=>check(n,b); choicesArea.appendChild(b);
+            });
+        } else { // 'listen-image'
+            imagePanel.style.display = 'none';
+            listenPrompt.style.display = 'block';
+            listenPrompt.textContent = '🔊';
+            choicesArea.className = 'img-grid';
+            const wrongItems = currentSet.words.filter(w => w.vi !== wordObj.vi).sort(()=>0.5-Math.random()).slice(0, 3);
+            const allItems = [wordObj, ...wrongItems].sort(()=>0.5-Math.random());
+            const itemsMedia = await Promise.all(allItems.map(async item => ({ item, media: await getMedia(item[state.questionLang], item.en) })));
+            itemsMedia.forEach(({ item, media }) => {
+                const card=document.createElement('div'); card.className='img-choice';
+                const im=new Image(); im.src = media.image; im.alt = item[state.questionLang]; im.referrerPolicy='no-referrer';
+                card.appendChild(im); card.onclick=()=>check(item[state.answerLang], card); choicesArea.appendChild(card);
+            });
+        }
+        
+        speak(name, state.questionLang);
+    }
+    
+    function check(picked, node) {
+        if(!state.can) return; state.can=false;
+        const isCorrect = picked === state.curr.answer;
+        if (isCorrect) { playSfx('ok'); state.score += 10; node?.classList.add('correct'); }
+        else { playSfx('nope'); state.score = Math.max(0, state.score - 5); state.lives--; node?.classList.add('incorrect'); }
+        updateHUD();
+        setTimeout(next, 1200);
+    }
+    
+    async function getMedia(name, englishName) {
+      const cacheKey = englishName || name;
+      if (mediaCache[cacheKey]) return mediaCache[cacheKey];
+      const searchTerm = englishName || name;
+      const sURL = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`;
+      let image = null, credit = null;
+      try {
+          const res = await fetch(sURL);
+          const data = await res.json();
+          if (data.thumbnail?.source) image = data.thumbnail.source;
+          if (data.content_urls?.desktop?.page) credit = data.content_urls.desktop.page;
+      } catch (e) { console.error("Failed to fetch media", e); }
+      const result = { image: image || `https://placehold.co/600x600/eef5ff/6b7b93?text=${encodeURIComponent(name)}`, credit, audio: null };
+      mediaCache[cacheKey] = result;
+      localStorage.setItem('mediaCache', JSON.stringify(mediaCache));
+      return result;
+    }
+
+    async function getCardDescription(vietnameseName) {
+        if (descriptionCache[vietnameseName]) return descriptionCache[vietnameseName];
+        
+        const functionUrl = `/.netlify/functions/get-description`;
+        $('card-back').querySelector('p').innerHTML = '<div class="loader"></div>';
+
+        try {
+            const response = await fetch(functionUrl, {
+                method: 'POST',
+                body: JSON.stringify({ name: vietnameseName })
+            });
+            if (!response.ok) throw new Error(`Function error: ${response.status}`);
+            const result = await response.json();
+            const text = result.description;
+            if (text) {
+                descriptionCache[vietnameseName] = text;
+                localStorage.setItem('descriptionCache', JSON.stringify(descriptionCache));
+                return text;
+            }
+        } catch (error) {
+            console.error("Serverless function call failed:", error);
+        }
+        return "Oops! Chưa có thông tin.";
+    }
+
+    function speak(text, lang = 'vi') {
+        if (state.muted || !text) return;
+        if (tts.speaking) tts.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        const langCodeMap = { 'vi': 'vi-VN', 'en': 'en-US', 'ko': 'ko-KR' };
+        const langCode = langCodeMap[lang] || 'vi-VN';
+        
+        u.lang = langCode;
+        u.rate = settings.rate;
+        u.pitch = settings.pitch;
+        
+        let v = voices.find(v => v.voiceURI === settings.voiceURI) || 
+                voices.find(v => v.lang === langCode && v.name.includes('Google')) ||
+                voices.find(v => v.lang === langCode);
+        
+        if (v) u.voice = v;
+        $('voice-indicator').textContent = `🎤: ${v ? v.name : 'Mặc định'}`;
+        tts.speak(u);
+    }
+
+    function spell(text, lang = 'vi') { 
+      if (!text) return;
+      const separator = lang === 'en' ? ' ' : ', ';
+      speak(Array.from(text.replace(/\s+/g, ' ').trim()).join(separator), lang); 
+    }
+    
+    function populateVoices() {
+      voices = tts.getVoices();
+      const select = $('voice-select');
+      select.innerHTML = '<option value="auto">Tự động chọn</option>' + 
+          voices.filter(v => v.lang.startsWith('vi') || v.lang.startsWith('en') || v.lang.startsWith('ko'))
+          .map(v => `<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`).join('');
+      select.value = settings.voiceURI;
+    }
+    
+    function showLB() {
+        const hs = JSON.parse(localStorage.getItem('highScores')||'[]');
+        $('leaderboard-list').innerHTML = hs.length? hs.map((s,i)=>`<li>#${i+1} ${s.name} - ${s.score} điểm</li>`).join('') : '<li>Chưa có ai chơi!</li>';
+        show('leaderboard');
+    }
+
+    function saveHS(name, score) {
+        if (!name) return;
+        const hs = JSON.parse(localStorage.getItem('highScores')||'[]');
+        hs.push({name, score});
+        hs.sort((a,b) => b.score - a.score);
+        localStorage.setItem('highScores', JSON.stringify(hs.slice(0, 10)));
+    }
+
+    // --- Bindings ---
+    $('start-btn').onclick = async () => {
+        const name = $('player-name-input').value.trim();
+        if (name.length < 2) {
+             $('player-name-input').style.borderColor = 'red';
+             return;
+        }
+        $('player-name-input').style.borderColor = '';
+        state.player = name;
+        await unlockAudio();
+        populateSetSelection();
+        show('setSelection');
+    };
+
+    $('generate-set-btn').onclick = async () => {
+        const topic = $('topic-input').value.trim();
+        if (!topic) {
+            alert("Vui lòng nhập một chủ đề!");
+            return;
+        }
+        const btn = $('generate-set-btn');
+        const spinner = $('loading-spinner');
+
+        btn.disabled = true;
+        spinner.style.display = 'block';
+
+        try {
+            const response = await fetch('/.netlify/functions/generate-set', {
+                method: 'POST',
+                body: JSON.stringify({ topic: topic })
+            });
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.statusText}`);
+            }
+            const data = await response.json();
+            const dynamicKey = `dynamic_${topic.replace(/\s+/g, '_')}`;
+            VOCABULARY_SETS[dynamicKey] = { name: `AI: ${topic}`, words: data.words };
+            state.chosenSetKey = dynamicKey;
+            $('menu-title').textContent = `Chủ đề: AI - ${topic}`;
+            show('menu');
+
+        } catch (error) {
+            console.error("Failed to generate set:", error);
+            alert("Rất tiếc, AI không thể tạo bộ từ vựng lúc này. Vui lòng thử lại sau!");
+        } finally {
+            btn.disabled = false;
+            spinner.style.display = 'none';
+        }
+    };
+    
+    $('question-lang').onchange = (e) => state.questionLang = e.target.value;
+    $('answer-lang').onchange = (e) => state.answerLang = e.target.value;
+
+    $('set-back-btn').onclick = () => show('start');
+    $('menu-back-btn').onclick = () => show('setSelection');
+    ['mode-quiz-name', 'mode-listen-image'].forEach(id => {
+        $(id).onclick = () => start(id.replace('mode-', ''));
+    });
+    $('restart-btn').onclick = () => start(state.mode);
+    $('to-menu-btn').onclick = () => { populateSetSelection(); show('setSelection'); };
+    $('home-btn').onclick = () => { if(confirm("Bạn có chắc muốn thoát?")) show('menu'); };
+    
+    $('listen-btn').onclick = () => state.curr && speak(state.curr.name, state.questionLang);
+    $('spell-btn').onclick = () => state.curr && spell(state.curr.answer, state.answerLang);
+    $('sound-btn').onclick = () => {
+      if(state.curr?.sound) speak(state.curr.sound, 'vi');
+      else if (state.curr?.audioElem) state.curr.audioElem.play();
+    };
+    $('card-flipper').onclick = async () => {
+        const flipper = $('card-flipper');
+        const cardBack = $('card-back');
+        if (!flipper.classList.contains('is-flipped')) {
+            if (!descriptionCache[state.curr.vi]) {
+                const description = await getCardDescription(state.curr.vi);
+                cardBack.querySelector('p').textContent = description;
+            }
+        }
+        flipper.classList.toggle('is-flipped');
+    };
+
+    $('settings-btn').onclick = () => show('settings');
+    $('save-settings-btn').onclick = () => {
+        settings.rate = parseFloat($('rate-slider').value);
+        settings.pitch = parseFloat($('pitch-slider').value);
+        settings.voiceURI = $('voice-select').value;
+        localStorage.setItem('gameSettings', JSON.stringify(settings));
+        
+        const currentScreen = sidebar.classList.contains('game-active') ? (state.lives > 0 ? (state.mode ? 'game' : 'end') : 'end') : 'menu';
+        show(currentScreen);
+    };
+    $('mute-btn').onclick = () => {
+        state.muted = !state.muted;
+        $('mute-btn').textContent = state.muted ? '🔇 Bật tiếng' : '🔊 Tắt tiếng';
+        if(state.muted) tts.cancel();
+    };
+    $('leaderboard-btn').onclick = showLB;
+    $('close-leaderboard-btn').onclick = () => {
+      const currentScreen = sidebar.classList.contains('game-active') ? (state.lives > 0 ? (state.mode ? 'game' : 'end') : 'end') : 'menu';
+      show(currentScreen);
+    };
+
+    // --- Init ---
+    const savedSettings = JSON.parse(localStorage.getItem('gameSettings'));
+    if (savedSettings) settings = savedSettings;
+    const rateSlider = $('rate-slider'), rateValue = $('rate-value');
+    const pitchSlider = $('pitch-slider'), pitchValue = $('pitch-value');
+    rateSlider.value = settings.rate; rateValue.textContent = settings.rate;
+    pitchSlider.value = settings.pitch; pitchValue.textContent = settings.pitch;
+    rateSlider.oninput = (e) => rateValue.textContent = e.target.value;
+    pitchSlider.oninput = (e) => pitchValue.textContent = e.target.value;
+    
+    populateVoices();
+    if(tts.onvoiceschanged !== undefined) tts.onvoiceschanged = populateVoices;
+    
+    show('start');
+});
+</script>
+</body>
+</html>
+
