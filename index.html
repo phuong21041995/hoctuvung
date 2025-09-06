@@ -352,6 +352,12 @@
         $('loading-modal').classList.add('hidden');
     }
 
+    // SỬA LỖI: Thêm hàm updateHUD
+    function updateHUD() {
+        $('score-display').textContent = `💯 Điểm: ${state.score}`;
+        $('lives-display').innerHTML = '❤️'.repeat(state.lives);
+    }
+
     async function main() {
         showScreen('start-screen');
         try {
@@ -409,7 +415,9 @@
     }
     
     async function setupSfx() {
-        await Tone.start();
+        if (Tone.context.state !== 'running') {
+            await Tone.start();
+        }
         sfx = {
             correct: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 } }).toDestination(),
             incorrect: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
@@ -530,7 +538,7 @@
 
         const allItemsCount = state.currentSet.items.filter(i => i.type === state.practiceType).length;
         const questionSlider = $('question-count');
-        questionSlider.max = allItemsCount;
+        questionSlider.max = allItemsCount > 0 ? allItemsCount : 20;
         if (parseInt(questionSlider.value) > allItemsCount) {
             questionSlider.value = allItemsCount;
         }
@@ -772,13 +780,17 @@
             state.score += 10;
             element.style.background = 'var(--ok)';
             // If it was a wrong item, remove it from the list
-            await updateDoc(userDocRef, { [`savedSets.${state.currentSetId}.wrongItems.${itemKey}`]: deleteField() });
+            if (state.currentSetId.startsWith('ai_') || state.currentSetId.startsWith('default_')) {
+                 await updateDoc(userDocRef, { [`savedSets.${state.currentSetId}.wrongItems.${itemKey}`]: deleteField() });
+            }
         } else {
             sfx.incorrect?.triggerAttackRelease("C3", "8n");
             state.lives -= 1;
             element.style.background = 'var(--danger)';
             // Add item to wrongItems list
-            await updateDoc(userDocRef, { [`savedSets.${state.currentSetId}.wrongItems.${itemKey}`]: state.currentItem });
+            if (state.currentSetId.startsWith('ai_') || state.currentSetId.startsWith('default_')) {
+                 await updateDoc(userDocRef, { [`savedSets.${state.currentSetId}.wrongItems.${itemKey}`]: state.currentItem });
+            }
         }
         updateHUD();
         setTimeout(nextTurn, 1500);
@@ -825,16 +837,31 @@
     $('settings-btn').onclick = () => showScreen('settings-modal');
     $('save-settings-btn').onclick = () => {
         settings.voiceURI = $('voice-select').value;
-        showScreen('game-screen'); // Or whatever the previous screen was
+        // Find the currently visible screen to return to it
+        const currentScreen = [...allScreens].find(s => !s.classList.contains('hidden') && !s.classList.contains('modal-overlay'));
+        showScreen(currentScreen ? currentScreen.id : 'set-selection-screen');
     }
     $('home-btn').onclick = () => {
         if(confirm("Bạn có chắc muốn thoát? Tiến trình sẽ không được lưu.")) {
             showScreen('set-selection-screen');
         }
     };
-    $('restart-btn').onclick = () => startGame(state.gameMode);
+    $('restart-btn').onclick = () => {
+        // Find the last game mode settings to restart
+        const isReview = state.currentItems.some(item => state.currentSet.wrongItems && state.currentSet.wrongItems[item.vi.replace(/[.#$[\]]/g, '_')]);
+        startGame(state.gameMode, isReview);
+    };
     $('to-menu-btn').onclick = () => showScreen('set-selection-screen');
     
+    // SỬA LỖI: Thêm event listeners cho sliders
+    ['word-count', 'sentence-count', 'question-count'].forEach(id => {
+        const slider = $(id);
+        const label = $(`${id}-label`);
+        if (slider && label) {
+            slider.oninput = () => label.textContent = slider.value;
+        }
+    });
+
     // --- Translator Logic ---
     function setupTranslator() {
         const sourceSelect = $('source-lang-select');
@@ -900,5 +927,4 @@
 </script>
 </body>
 </html>
-
 
