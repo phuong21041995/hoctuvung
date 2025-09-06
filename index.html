@@ -275,7 +275,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { VOCABULARY_SETS as initialSets } from './vocabulary.js';
 
     // --- Firebase Config ---
@@ -472,7 +472,7 @@
             if (confirm(`Bạn có chắc muốn xóa bộ từ vựng này không?`)) {
                 const userDocRef = doc(db, "users", state.userId);
                 await updateDoc(userDocRef, {
-                    [`savedSets.${deleteId}`]: delete(undefined) // Firestore way to delete a map field
+                    [`savedSets.${deleteId}`]: deleteField() // Firestore way to delete a map field
                 });
                 alert("Đã xóa!");
             }
@@ -863,3 +863,4 @@
 </script>
 </body>
 </html>
+
