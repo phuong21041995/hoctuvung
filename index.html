@@ -281,13 +281,21 @@
     // --- Firebase Config ---
     // IMPORTANT: Replace with your actual Firebase configuration
 	const firebaseConfig = {
-	  apiKey: "AIzaSyCCbca7N4rSeGGDs8Xr2yjEBgWn7ihOn-U",
-	  authDomain: "hoccungtam.firebaseapp.com",
-	  projectId: "hoccungtam",
-	  storageBucket: "hoccungtam.firebasestorage.app",
-	  messagingSenderId: "827609819388",
-	  appId: "1:827609819388:web:67cfd286094e688ff28f79",
-	  measurementId: "G-L7ZDXPNMPM"
+
+	  apiKey: "AIzaSyCCbca7N4rSeGGDs8Xr2yjEBgWn7ihOn-U",
+
+	  authDomain: "hoccungtam.firebaseapp.com",
+
+	  projectId: "hoccungtam",
+
+	  storageBucket: "hoccungtam.firebasestorage.app",
+
+	  messagingSenderId: "827609819388",
+
+	  appId: "1:827609819388:web:67cfd286094e688ff28f79",
+
+	  measurementId: "G-L7ZDXPNMPM"
+
 	};
     
     // --- App Initialization ---
@@ -419,9 +427,12 @@
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             
+            // SỬA LỖI: Lọc và làm sạch dữ liệu trả về từ AI để loại bỏ các mục không hợp lệ
+            const cleanedItems = data.items.filter(item => item && item.vi && item.en && item.ko);
+            
             state.tempAiSet = {
                 name: `AI: ${topic}`,
-                items: data.items,
+                items: cleanedItems,
             };
 
             $('save-set-topic').textContent = topic;
@@ -863,4 +874,5 @@
 </script>
 </body>
 </html>
+
 
