@@ -1,0 +1,5 @@
+# This file should be in the root of your project, next to app.html
+
+[build]
+  # Dòng này chỉ cho Netlify biết các serverless functions của bạn nằm trong thư mục 'netlify/functions'
+  functions = "netlify/functions"
