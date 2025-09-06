@@ -7,9 +7,9 @@ exports.handler = async function(event, context) {
 
     const { topic } = JSON.parse(event.body);
     const apiKey = process.env.GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
+    // Nâng cấp lên mô hình Gemini mới nhất
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
-    // Prompt được cải tiến để cung cấp nhiều ngữ cảnh hơn cho AI, giúp giảm thiểu khả năng bị chặn
     const prompt = `
       You are an AI assistant for a language learning app designed for Vietnamese speakers.
       Your task is to generate a vocabulary set based on a user-provided topic.
@@ -34,18 +34,40 @@ exports.handler = async function(event, context) {
       Now, generate the JSON for the topic "${topic}":
     `;
 
+    // Thêm cài đặt an toàn để AI bớt "nhạy cảm" hơn
+    const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }],
+        safetySettings: [
+            {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_NONE"
+            },
+            {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_NONE"
+            },
+            {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            }
+        ]
+    };
+
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify(requestBody) // Sử dụng body mới có cài đặt an toàn
         });
 
         const result = await response.json();
 
-        // Xử lý trường hợp AI chặn yêu cầu hoặc không trả về nội dung
         if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content) {
-            console.error("AI blocked request or returned empty response for topic:", topic);
+            console.error("AI blocked request or returned empty response for topic:", topic, JSON.stringify(result));
             const errorMessage = result.promptFeedback?.blockReason || 'SAFETY_FILTERS';
             return {
                 statusCode: 400,
