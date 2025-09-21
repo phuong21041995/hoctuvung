@@ -2,14 +2,14 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Học Ngoại Ngữ AI</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Học Mà Chơi - Thế Giới AI Đa Ngữ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap');
   :root{
-    --bg-sky:#a7e0ff; --bg-grass:#b4f8c8; --primary:#fbe7c6; --secondary:#ffd6a5; --accent: #84a9ff;
-    --danger:#ff8a80; --ok:#b9f6ca; --text:#3d2a1f; --panel:#ffffffee; --card-bg: #fff;
-    --shadow-color: #00000020; --sidebar-bg: #fdfaf4; --disabled: #dcdcdc;
+    --bg-sky:#a7e0ff; --bg-grass:#b4f8c8; --primary:#fbe7c6; --secondary:#ffd6a5;
+    --danger:#ff8a80; --ok:#b9f6ca; --text:#3d2a1f; --panel:#ffffffee;
+    --shadow-color: #00000020; --sidebar-bg: #fdfaf4;
   }
   *{box-sizing:border-box;margin:0;padding:0; font-family:'Quicksand', sans-serif;}
   body{
@@ -18,36 +18,29 @@
     display:flex; overflow: hidden;
   }
 
-  /* --- BỐ CỤC CHÍNH --- */
+  /* --- BỐ CỤC: Sidebar + Main Content --- */
   #sidebar{
-    width: 280px; flex-shrink: 0; background: var(--sidebar-bg);
+    width: 280px; flex-shrink: 0;
+    background: var(--sidebar-bg);
     padding: 1.5rem; display: flex; flex-direction: column;
     box-shadow: 4px 0 20px var(--shadow-color); z-index: 10;
     transition: transform 0.3s ease-in-out;
   }
   #main-content{ flex: 1; position: relative; }
-  
-  @media (max-width: 768px) {
-    #sidebar { position: absolute; transform: translateX(-100%); }
-    #sidebar.open { transform: translateX(0); }
-    #menu-toggle {
-      display: block; position: fixed; top: 1rem; left: 1rem; z-index: 1000;
-      background: var(--panel); border-radius: 50%; width: 50px; height: 50px;
-      border: none; font-size: 1.5rem; box-shadow: 0 4px 10px var(--shadow-color);
-    }
-  }
 
-  /* --- COMPONENTS --- */
+  /* --- Sidebar components --- */
   .sidebar-header { text-align: center; margin-bottom: 2rem;}
   .sidebar-header h2 { font-size: 1.8rem; }
   .sidebar-hud { background: #ffffffaa; border-radius: 16px; padding: 1rem; margin-bottom: 1.5rem; }
   .hud-item { margin-bottom: 0.8rem; font-size: 1.2rem; font-weight: 700; }
   #lives-display { font-size: 1.5rem; }
-  .sidebar-nav { margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; }
-  .sidebar-hud, .game-controls { display: none; }
-  .game-active .sidebar-hud, .game-active .game-controls { display: block; }
-  
-  /* --- MÀN HÌNH (SCREEN) --- */
+  .sidebar-controls { margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; }
+  #voice-indicator { font-size:.9em; opacity:.8; text-align: center; margin-bottom: 1rem; font-style: italic; }
+  .sidebar-hud, .sidebar-controls { display: none; }
+  .game-active .sidebar-hud, .game-active .sidebar-controls { display: block; }
+
+
+  /* --- Quản lý các màn hình (screen) --- */
   .screen{
     position:absolute; inset:0; padding:clamp(1rem, 5vh, 2rem);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -57,202 +50,282 @@
   }
   .hidden{ opacity:0; transform:scale(.97); pointer-events:none; }
   
-  h1{font-size:clamp(32px, 8vw, 52px);}
-  h2{font-size:clamp(24px, 6vw, 40px);}
-  p{font-size:clamp(16px, 4vw, 22px);}
+  /* --- Typography & Buttons --- */
+  h1{font-size:clamp(32px, 4.5vmax, 52px); text-shadow:1px 1px 2px #fff9;}
+  h2{font-size:clamp(24px, 3.5vmax, 40px);}
+  p{font-size:clamp(16px, 1.8vmax, 22px);}
   .btn{
     width: 100%; padding:.8em 1.5em; border:none; border-radius:12px;
     background:var(--primary); font-weight:700; cursor:pointer;
     box-shadow: 0 4px var(--shadow-color);
     margin:.3em 0; transition: all .1s ease-out;
-    font-size: clamp(16px, 4vw, 20px);
+    font-size: clamp(16px, 1.6vmax, 20px);
   }
   .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 12px var(--shadow-color); }
   .btn:active{ transform:translateY(1px); box-shadow:0 2px 4px var(--shadow-color); }
   .btn.secondary{background:var(--secondary);}
-  .btn.accent{background:var(--accent); color:#fff;}
-  .btn.danger{background:var(--danger); color:#fff;}
-  .btn.ok{background:var(--ok);}
-  .btn.small { padding: 0.6em 1em; font-size: clamp(14px, 3.5vw, 16px); width: auto; }
-  .btn[disabled]{opacity:.5; cursor:not-allowed; transform:none; box-shadow:0 2px 4px var(--shadow-color);}
-  input, textarea{
+  .btn.ok{background:#b9f6ca;}
+  .btn.small { padding: 0.6em 1em; font-size: clamp(14px, 1.4vmax, 16px); width: auto; }
+  .btn[disabled]{opacity:.5; cursor:not-allowed; transform:none; box-shadow:none;}
+  input, select {
     width:min(520px, 90%); padding:.8em; font-size:1.05em; text-align:center;
-    border:3px solid var(--secondary); border-radius:14px; background:var(--card-bg); margin-bottom: 1rem;
+    border:3px solid var(--secondary); border-radius:14px; background:#fff; margin-bottom: 1rem;
+    transition: border-color .3s;
   }
+  select { text-align: left; padding: .6em; }
 
-  /* --- Cài đặt & Sliders --- */
-  .settings-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: center; width: 100%;}
-  .setting-item { display: flex; flex-direction: column; gap: 0.5rem; }
-  .setting-item label { font-weight: 700; }
-  .setting-item input[type="range"] { width: 100%; }
-
-  /* --- Set Selection & AI Generation --- */
-  #set-selection-screen .content-wrapper { display: flex; flex-direction: column; gap: 2rem; width: 100%; max-width: 900px; }
-  .set-container { background: var(--panel); padding: 1.5rem; border-radius: 16px; }
+  /* --- Màn hình chọn bộ thẻ & menu --- */
+  .selection-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem; width: 100%; max-width: 1000px;
+  }
+  .menu-card {
+    display:flex; align-items:center; gap:1rem; background:#fff;
+    border-radius:16px; box-shadow:0 8px 20px #0001; padding:1rem; text-align:left;
+  }
+  .menu-card-icon { font-size:2em; }
+  .menu-card-text { flex:1; } .menu-card-text b { font-size:1.1em; } .menu-card-text div { opacity:.8; }
+  .menu-card .btn { width: auto; }
+  
+  /* --- AI Topic Generator --- */
+  .ai-generator {
+    background: #fff; padding: 1.5rem; border-radius: 16px; margin-top: 2rem;
+    box-shadow: 0 8px 25px var(--shadow-color); width: 100%; max-width: 600px;
+  }
   .ai-generator input { width: 100%; }
-  #saved-sets-list { list-style: none; padding: 0; max-height: 40vh; overflow-y: auto; }
-  #saved-sets-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #eee; }
-  #saved-sets-list li:last-child { border-bottom: none; }
-  
-  /* --- GAME SCREEN --- */
-  #game-content { width:100%; height: 100%; display:flex; flex-direction: column; align-items:center; justify-content:center; gap:1.5rem; padding: 1rem; }
-  .game-panel {
-    background: var(--panel); border-radius: 24px; padding: clamp(1rem, 2vw, 2rem);
-    box-shadow: 0 8px 25px var(--shadow-color); display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 1.5rem; width: 100%;
+  .ai-generator .btn { margin-top: 0.5rem; }
+  #loading-spinner {
+    display: none; width: 40px; height: 40px; border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--secondary); border-radius: 50%;
+    animation: spin 1s linear infinite; margin: 1rem auto;
   }
-  .question-panel { flex: 1; max-height: 50%; }
-  .answer-panel { flex: 1; max-height: 50%; overflow-y: auto; }
-  .question-panel img { max-width: 100%; max-height: 35vh; object-fit: contain; border-radius: 16px; }
-  #listen-again-btn { font-size: 3em; background: none; border: none; cursor: pointer; }
-  .choices-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:.8rem; width:100%; }
-  
-  /* --- FILL IN BLANK MODE --- */
-  #word-slots{display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; margin-bottom: 1rem; }
-  .slot{
-    width:clamp(40px, 10vw, 55px); height:clamp(50px, 12vw, 65px); border:3px dashed #bcd; border-radius:10px;
-    background:#f6fbff; display:flex; align-items:center; justify-content:center;
-    font-size: clamp(1.5em, 5vw, 2em); font-weight:700;
-  }
-  .slot.filled{border-style:solid; background:var(--card-bg);} .slot.space{border:none; background:transparent; width:1ch;}
-  #letter-bank{display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; max-width: 100%;}
-  .letter-tile{
-    width:clamp(45px, 11vw, 60px); height:clamp(45px, 11vw, 60px); border-radius:12px; background:#ffe9a8;
-    box-shadow: 0 4px #e1c06a; font-weight:700; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; font-size:clamp(1.2em, 4vw, 1.8em);
-    transition: all .15s;
-  }
-  .letter-tile:hover { transform:scale(1.05); } .letter-tile.hidden{ visibility:hidden; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-  /* --- TRANSLATOR SCREEN --- */
-  #translator-screen { gap: 1rem; width: 100%; }
-  #translator-container { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 700px; height: 100%; }
-  .lang-selector { display: flex; justify-content: center; align-items: center; gap: 1rem; }
-  #swap-lang-btn { font-size: 1.5rem; }
-  #translator-input { height: 35%; resize: none; text-align: left; }
-  #translator-output { min-height: 35%; background: #f0f0f0; border-radius: 14px; padding: .8em; text-align: left; overflow-y: auto; }
-
-  /* --- MODALS --- */
-  .modal-overlay{ background:#00000088; z-index: 100; }
-  .modal-box{ background:var(--card-bg); padding:1.5rem; border-radius:16px; width:min(500px, 90%); animation: pop-in .3s ease-out; }
-  @keyframes pop-in { from { transform:scale(0.9); opacity:0; } to { transform:scale(1); opacity:1; } }
-  .loading-indicator { text-align: center; }
-  .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: var(--secondary); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+  /* === Màn hình GAME === */
+  #game-content{
+    width:100%; height: 100%; display:flex; 
+    align-items:center; justify-content:center;
+    gap:2rem; padding:2rem;
+  }
+  
+  /* --- Thẻ lật & Tỉ lệ ảnh --- */
+  #card-flipper {
+    perspective: 1000px; cursor: pointer;
+    width:min(45vh, 90vw, 450px); height:min(45vh, 90vw, 450px);
+    flex-shrink:0;
+  }
+  .flipper-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+  #card-flipper.is-flipped .flipper-inner { transform: rotateY(180deg); }
+  #animal-display, #card-back {
+    position: absolute; width: 100%; height: 100%;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    border-radius:20px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background: #ffffffc0;
+    box-shadow: 0 8px 25px var(--shadow-color);
+  }
+  #card-back {
+    transform: rotateY(180deg);
+    flex-direction: column; padding: 1.5rem; text-align: center;
+  }
+  #card-back h3 { margin-bottom: 0.2rem; font-size: 1.5em; color: var(--text); }
+  #card-back h4 { margin-bottom: 0.5rem; font-size: 1.1em; opacity: 0.8; }
+  #card-back p { font-size: 1em; }
+  #animal-display img{ width:100%; height:100%; object-fit:contain; }
+  #card-back .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: var(--secondary); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
   @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  /* --- Layout cho các chế độ chơi --- */
+  .game-panel {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 24px;
+    padding: clamp(1rem, 2vw, 2rem);
+    box-shadow: 0 8px 25px var(--shadow-color);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1.5rem;
+  }
+
+  /* Chế độ quiz-name & listen-image */
+  #default-layout { flex: 1; height: 100%; width:100%; max-width: 800px; }
+  .actions{ display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; }
+  #media-credit{ font-size:.9em; opacity:.85; }
+  .choices-area, .img-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:.8rem; width:100%; max-width:900px; margin-top:1vh;
+  }
+  .choice-btn { height: auto; min-height: 72px; padding: 0.8em 1em; font-size:1.1em; width: 100%; }
+  .img-choice{
+    border-radius:16px; overflow:hidden; background:#fff; border:4px solid transparent;
+    box-shadow:0 8px 22px #0001; height:180px; cursor:pointer; transition: all .2s;
+  }
+  .img-choice:hover { transform:scale(1.03); box-shadow:0 12px 30px #0002; }
+  .img-choice.correct{ border-color:var(--ok); } .img-choice.incorrect{ border-color:var(--danger); }
+  .img-choice img{ width:100%; height:100%; object-fit:contain; }
+  #listen-prompt { font-size: 5em; }
+
+  /* --- Modals (Bảng xếp hạng, Cài đặt) --- */
+  .modal-overlay{ background:#00000088; z-index: 100; }
+  .modal-box{ background:#fff; padding:1.5rem; border-radius:16px; width:min(420px, 90%); animation: pop-in .3s ease-out; }
+  @keyframes pop-in { from { transform:scale(0.9); opacity:0; } to { transform:scale(1); opacity:1; } }
+  #leaderboard-list { padding-left: 1.5rem; } #leaderboard-list li { margin-bottom: 0.5rem; font-size:1.1em; }
+  .settings-row { display:flex; flex-direction:column; gap:10px; }
+  .settings-row label { display:flex; justify-content:space-between; align-items:center; }
+  .settings-row input[type=range] { flex:1; margin-left:1rem; }
+  
+  /* --- CSS CHO ĐIỆN THOẠI --- */
+  @media (max-width: 768px) {
+    body { flex-direction: column; overflow: auto; }
+    
+    #sidebar {
+      width: 100%;
+      flex-direction: row; /* Dàn các mục trên sidebar theo hàng ngang */
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem 1rem;
+      box-shadow: 0 4px 15px var(--shadow-color);
+      flex-wrap: wrap; /* Cho phép xuống dòng nếu không đủ chỗ */
+    }
+    .sidebar-header h2 { font-size: 1.5rem; }
+    .sidebar-header p { display: none; } /* Ẩn mô tả cho gọn */
+    .sidebar-hud { display:flex; flex-direction: row; gap: 1rem; margin-bottom: 0; padding: 0; background: none; }
+    .hud-item { margin-bottom: 0; font-size: 1rem; }
+    #lives-display { font-size: 1.2rem; }
+    .sidebar-controls { display:flex; margin-top: 0; flex-direction: row; gap: 0.3rem; }
+    .sidebar-controls .btn { padding: 0.5em; font-size: 0.9em; width: auto; }
+    #home-btn, #leaderboard-btn { display:none; } /* Ẩn bớt nút cho gọn */
+    #voice-indicator { display: none; }
+
+    .screen { padding: 1.5rem 1rem; }
+    
+    #game-content {
+      flex-direction: column; /* Chuyển layout game thành cột dọc */
+      padding: 1rem; gap: 1rem;
+      height: auto;
+    }
+    #card-flipper {
+      width: min(40vh, 60vw, 300px);
+      height: min(40vh, 60vw, 300px);
+    }
+    .game-panel { padding: 1rem; }
+    .choices-area, .img-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.5rem;
+    }
+    .choice-btn { min-height: 60px; font-size: 1em; }
+  }
 
 </style>
 </head>
 <body>
 
-<button id="menu-toggle" style="display: none;">☰</button>
 <div id="sidebar">
     <div class="sidebar-header">
-        <h2>Học AI</h2>
-        <p>Nâng trình ngoại ngữ</p>
+        <h2>Học Mà Chơi</h2>
+        <p>Thế giới AI</p>
     </div>
     <div class="sidebar-hud">
         <div class="hud-item" id="score-display">💯 Điểm: 0</div>
         <div class="hud-item" id="lives-display">❤️❤️❤️</div>
     </div>
-    <nav class="sidebar-nav">
-        <div class="game-controls">
-             <button id="home-btn" class="btn">🏠 Về Menu</button>
-        </div>
-        <button id="nav-learn-btn" class="btn accent">📚 Học Từ Vựng</button>
-        <button id="nav-translate-btn" class="btn secondary">🌐 Dịch Thuật</button>
+    <div id="voice-indicator">🎤 Giọng đọc mặc định</div>
+    <div class="sidebar-controls">
+        <button id="home-btn" class="btn">🏠 Về Menu</button>
         <button id="settings-btn" class="btn secondary">⚙️ Cài đặt</button>
-    </nav>
+        <button id="mute-btn" class="btn secondary">🔊 Tắt tiếng</button>
+        <button id="leaderboard-btn" class="btn secondary">🏆 Xếp hạng</button>
+    </div>
 </div>
 
 <main id="main-content">
   <!-- START -->
   <div id="start-screen" class="screen">
-    <h1>Học Ngoại Ngữ AI</h1>
-    <p>Nhập tên của bạn để bắt đầu!</p>
+    <h1>Thế Giới AI Đa Ngữ</h1>
+    <p>Nhập tên của bé để bắt đầu!</p>
     <input id="player-name-input" maxlength="20" placeholder="Tên của bạn ✏️"/>
     <button id="start-btn" class="btn ok">Bắt đầu ▶️</button>
   </div>
   
   <!-- SET SELECTION -->
   <div id="set-selection-screen" class="screen hidden">
-    <h2>Chọn hoặc tạo chủ đề để học</h2>
-    <div class="content-wrapper">
-        <div class="set-container ai-generator">
-            <h3>Tạo bộ từ vựng bằng AI ✨</h3>
-            <p>Nhập một chủ đề (vd: vũ trụ, động vật biển, Giáng sinh...)</p>
-            <input id="ai-topic-input" placeholder="Chủ đề bạn muốn học..."/>
-            <div class="settings-group">
-                <div class="setting-item">
-                    <label for="word-count">Số lượng từ: <span id="word-count-label">7</span></label>
-                    <input type="range" id="word-count" min="3" max="15" value="7">
-                </div>
-                <div class="setting-item">
-                    <label for="sentence-count">Số lượng câu: <span id="sentence-count-label">4</span></label>
-                    <input type="range" id="sentence-count" min="1" max="10" value="4">
-                </div>
-            </div>
-            <button id="ai-generate-btn" class="btn accent">Tạo Ngay!</button>
-        </div>
-        <div class="set-container">
-            <h3>Bộ từ đã lưu & có sẵn</h3>
-            <ul id="saved-sets-list"></ul>
-        </div>
-    </div>
-  </div>
-
-  <!-- PRACTICE TYPE SELECTION -->
-  <div id="practice-type-screen" class="screen hidden">
-      <h2 id="practice-set-title"></h2>
-      <p>Bạn muốn luyện tập gì?</p>
-      <div style="width: min(400px, 90%)">
-          <button class="btn ok" data-type="word">Từ Vựng Đơn Lẻ</button>
-          <button class="btn ok" data-type="sentence">Mẫu Câu Hoàn Chỉnh</button>
-          <button class="btn" id="practice-type-back-btn">⬅️ Đổi chủ đề</button>
+      <h2>Chọn một chủ đề có sẵn...</h2>
+      <div id="set-selection-grid" class="selection-grid"></div>
+      
+      <div class="ai-generator">
+        <h2>...Hoặc để AI tạo chủ đề mới! ✨</h2>
+        <p>Nhập một chủ đề bất kỳ (vd: vũ trụ, gia đình, thời tiết...)</p>
+        <input id="topic-input" placeholder="Chủ đề bạn muốn học 🚀" />
+        <button id="generate-set-btn" class="btn ok">Tạo bộ từ vựng</button>
+        <div id="loading-spinner"></div>
       </div>
-  </div>
 
-  <!-- GAME SETUP SCREEN -->
-  <div id="game-setup-screen" class="screen hidden">
-      <h2>Cài đặt trò chơi</h2>
-      <div class="modal-box" style="width: min(500px, 95%)">
-          <div class="setting-item" style="margin-bottom: 2rem;">
-              <label for="question-count">Số lượng câu hỏi: <span id="question-count-label">10</span></label>
-              <input type="range" id="question-count" min="5" max="20" value="10">
-          </div>
-          <button id="start-normal-game-btn" class="btn ok">Bắt đầu Chơi Thường</button>
-          <button id="start-review-game-btn" class="btn accent">Ôn tập <span id="review-count">(0)</span> từ sai</button>
-          <button id="game-setup-back-btn" class="btn">⬅️ Quay lại</button>
-      </div>
+      <button id="set-back-btn" class="btn" style="margin-top: 1rem;">⬅️ Quay lại</button>
   </div>
 
   <!-- MENU -->
   <div id="menu-screen" class="screen hidden">
-    <h2 id="menu-title">Chọn chế độ chơi</h2>
-    <div id="game-modes-grid" class="selection-grid" style="max-width: 800px;"></div>
-    <button id="menu-back-btn" class="btn">⬅️ Quay lại</button>
+    <h2 id="menu-title">Chủ đề: ...</h2>
+    
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center; flex-wrap: wrap;">
+        <select id="question-lang">
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="en">🇬🇧 Tiếng Anh</option>
+            <option value="ko">🇰🇷 Tiếng Hàn</option>
+        </select>
+        <span style="font-size: 1.5em; font-weight: bold;">▶️</span>
+        <select id="answer-lang">
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="en" selected>🇬🇧 Tiếng Anh</option>
+            <option value="ko">🇰🇷 Tiếng Hàn</option>
+        </select>
+    </div>
+
+    <div class="selection-grid">
+      <div class="menu-card">
+        <div class="menu-card-icon">🖼️➡️🔤</div>
+        <div class="menu-card-text"><b>Xem hình → chọn tên</b><div>Nhìn hình, chọn tên đúng.</div></div>
+        <button id="mode-quiz-name" class="btn ok small">Chơi</button>
+      </div>
+      <div class="menu-card">
+        <div class="menu-card-icon">🔊➡️🖼️</div>
+        <div class="menu-card-text"><b>Nghe → chọn hình</b><div>Nghe tên rồi chọn hình đúng.</div></div>
+        <button id="mode-listen-image" class="btn ok small">Chơi</button>
+      </div>
+       <div class="menu-card">
+        <div class="menu-card-icon">🖼️➡️✍️</div>
+        <div class="menu-card-text"><b>Xem hình → điền chữ</b><div>Nhìn hình, điền tên đúng.</div></div>
+        <button id="mode-fill-word" class="btn ok small">Chơi</button>
+      </div>
+    </div>
+    <button id="menu-back-btn" class="btn">⬅️ Đổi chủ đề</button>
   </div>
 
   <!-- GAME -->
   <div id="game-screen" class="screen hidden">
     <div id="game-content">
-        <div id="question-panel" class="game-panel question-panel"></div>
-        <div id="answer-panel" class="game-panel answer-panel"></div>
-    </div>
-  </div>
-
-  <!-- TRANSLATOR -->
-  <div id="translator-screen" class="screen hidden">
-      <h2>AI Dịch Thuật</h2>
-      <div id="translator-container">
-          <div class="lang-selector">
-              <select id="source-lang-select" class="btn small"></select>
-              <button id="swap-lang-btn" class="btn small">⇌</button>
-              <select id="target-lang-select" class="btn small"></select>
+      <div id="image-panel" class="game-panel">
+          <div id="card-flipper">
+              <div class="flipper-inner">
+                  <div id="animal-display"></div>
+                  <div id="card-back"></div>
+              </div>
           </div>
-          <textarea id="translator-input" placeholder="Nhập văn bản cần dịch..."></textarea>
-          <button id="translate-btn" class="btn accent">Dịch</button>
-          <div id="translator-output">Bản dịch sẽ xuất hiện ở đây...</div>
+          <div class="actions">
+            <button id="listen-btn" class="btn small">🔊 Đọc</button>
+            <button id="spell-btn" class="btn small">🔤 Đánh vần</button>
+            <button id="sound-btn" class="btn small" disabled>🐾 Âm thanh</button>
+          </div>
+          <div id="media-credit"></div>
       </div>
+            
+      <div id="default-layout" class="game-panel">
+          <div id="listen-prompt"></div>
+           <div id="fill-in-panel" style="display: none; flex-direction: column; gap: 1rem; width:100%;">
+            <input id="fill-in-input" placeholder="Nhập câu trả lời..." />
+            <button id="fill-in-check-btn" class="btn ok">Kiểm tra</button>
+          </div>
+          <div id="choices-area" class="choices-area"></div>
+      </div>
+    </div>
   </div>
 
   <!-- END -->
@@ -260,671 +333,467 @@
     <h2>Kết thúc!</h2>
     <p>Điểm cuối cùng của bạn:</p>
     <h1 id="final-score">0</h1>
-    <button id="restart-btn" class="btn ok">Chơi lại 🔄</button>
+    <button id="restart-btn" class="btn ok">Chơi lại chủ đề này 🔄</button>
     <button id="to-menu-btn" class="btn">🏠 Về Menu chính</button>
   </div>
 
   <!-- MODALS -->
-  <div id="loading-modal" class="screen hidden modal-overlay">
-      <div class="loading-indicator">
-          <div class="loader"></div>
-          <p id="loading-text" style="color: white; margin-top: 1rem; font-size: 1.2em;">Đang tải...</p>
-      </div>
-  </div>
-  <div id="save-set-modal" class="screen hidden modal-overlay">
-      <div class="modal-box">
-          <h2 id="save-set-title">Lưu bộ từ vựng?</h2>
-          <p>Bạn có muốn lưu lại bộ từ vựng về chủ đề "<b id="save-set-topic"></b>" để học lại sau không?</p>
-          <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-              <button id="confirm-save-btn" class="btn ok">Lưu lại</button>
-              <button id="cancel-save-btn" class="btn secondary">Không, cảm ơn</button>
-          </div>
-      </div>
-  </div>
-   <div id="settings-modal" class="screen hidden modal-overlay">
+  <div id="leaderboard-modal" class="screen hidden modal-overlay">
     <div class="modal-box">
-      <h2>Tùy chỉnh</h2>
-       <label>Giọng đọc:
-          <select id="voice-select"><option>Đang tải...</option></select>
-        </label>
-      <button id="save-settings-btn" class="btn ok">Đóng</button>
+      <h2>🏆 Bảng Xếp Hạng</h2>
+      <ol id="leaderboard-list"></ol>
+      <button id="close-leaderboard-btn" class="btn">Đóng</button>
     </div>
   </div>
-
+  <div id="settings-modal" class="screen hidden modal-overlay">
+    <div class="modal-box">
+      <h2>Tùy chỉnh</h2>
+      <div class="settings-row">
+        <label>Giọng đọc:
+          <select id="voice-select"><option>Đang tải...</option></select>
+        </label>
+        <label>Tốc độ: <span id="rate-value">1.0</span>
+          <input type="range" id="rate-slider" min="0.7" max="1.3" step="0.05" value="1.0"/>
+        </label>
+        <label>Pitch: <span id="pitch-value">1.0</span>
+          <input type="range" id="pitch-slider" min="0.8" max="1.3" step="0.05" value="1.0"/>
+        </label>
+      </div>
+      <div style="margin-top:1rem; text-align:center;">
+        <button id="save-settings-btn" class="btn ok">Lưu & đóng</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { VOCABULARY_SETS as initialSets } from './vocabulary.js';
+<script src="vocabulary.js"></script>
 
-	const firebaseConfig = {
-	  apiKey: "AIzaSyCCbca7N4rSeGGDs8Xr2yjEBgWn7ihOn-U",
-	  authDomain: "hoccungtam.firebaseapp.com",
-	  projectId: "hoccungtam",
-	  storageBucket: "hoccungtam.firebasestorage.app",
-	  messagingSenderId: "827609819388",
-	  appId: "1:827609819388:web:67cfd286094e688ff28f79",
-	  measurementId: "G-L7ZDXPNMPM"
-	};
-    
-    // --- App Initialization ---
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-
+<script>
+document.addEventListener('DOMContentLoaded', () => {
     const $ = id => document.getElementById(id);
-    const allScreens = document.querySelectorAll('.screen');
+    
+    const screens = {
+        start: $('start-screen'), setSelection: $('set-selection-screen'),
+        menu: $('menu-screen'), game: $('game-screen'), end: $('end-screen'),
+        settings: $('settings-modal'), leaderboard: $('leaderboard-modal')
+    };
     const sidebar = $('sidebar');
-    const menuToggle = $('menu-toggle');
     
     let state = {
-        player: '', score: 0, lives: 3, userId: null,
-        currentSet: null, currentSetId: null,
-        currentItems: [], currentItem: null,
-        practiceType: 'word', gameMode: null,
-        canInteract: true, tempAiSet: null,
+        player: '', score: 0, lives: 3, muted: false,
+        chosenSetKey: null, mode: null, 
+        questionLang: 'vi', answerLang: 'en',
+        curr: null, can: true, soundUnlocked: false
     };
-    
-    let settings = { voiceURI:'auto' };
+    let settings = { voiceURI: 'auto', rate: 1.0, pitch: 1.0 };
     let voices = [];
-    let sfx = {};
+    const mediaCache = JSON.parse(localStorage.getItem('mediaCache') || '{}');
+    const descriptionCache = JSON.parse(localStorage.getItem('descriptionCache') || '{}');
+
+    const sfx = {
+        click: new Tone.PluckSynth({ volume: -10 }).toDestination(),
+        ok: new Tone.PluckSynth({ volume: -8 }).toDestination(),
+        nope: new Tone.MembraneSynth({ pitchDecay: .1, octaves: 2, volume: -10 }).toDestination()
+    };
+    function playSfx(key) { if(state.muted) return; (sfx[key])?.triggerAttackRelease(key === 'nope' ? 'C2' : 'C5', '8n'); }
+
     const tts = window.speechSynthesis;
-    const availableLangs = { 'vi': 'Tiếng Việt 🇻🇳', 'en': 'Tiếng Anh 🇬🇧', 'ko': 'Tiếng Hàn 🇰🇷' };
     
-    // --- CORE APP LOGIC ---
-
-    function showScreen(screenId) {
-        allScreens.forEach(s => s.id === screenId ? s.classList.remove('hidden') : s.classList.add('hidden'));
+    function show(screenId) {
+        Object.values(screens).forEach(s => s.classList.add('hidden'));
+        screens[screenId].classList.remove('hidden');
         if (['game', 'end'].includes(screenId)) sidebar.classList.add('game-active');
-        else if (!screenId.includes('modal')) sidebar.classList.remove('game-active');
-        sidebar.classList.remove('open');
+        else if (!['settings', 'leaderboard'].includes(screenId)) sidebar.classList.remove('game-active');
     }
 
-    function showLoading(text = "Đang xử lý...") {
-        $('loading-text').textContent = text;
-        $('loading-modal').classList.remove('hidden');
-    }
-
-    function hideLoading() {
-        $('loading-modal').classList.add('hidden');
-    }
-
-    // SỬA LỖI: Thêm hàm updateHUD
     function updateHUD() {
         $('score-display').textContent = `💯 Điểm: ${state.score}`;
         $('lives-display').innerHTML = '❤️'.repeat(state.lives);
     }
 
-    async function main() {
-        showScreen('start-screen');
-        try {
-            await signInAnonymously(auth);
-            state.userId = auth.currentUser.uid;
-            console.log("Signed in with UID:", state.userId);
-            setupFirestoreListener();
-            populateVoices();
-            if (tts.onvoiceschanged !== undefined) tts.onvoiceschanged = populateVoices;
-        } catch(e) {
-            console.error("Auth Error:", e);
-            alert("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại cấu hình Firebase và tải lại trang.");
-        }
-    }
-
-    function setupFirestoreListener() {
-        const userDocRef = doc(db, "users", state.userId);
-        onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const userData = docSnap.data();
-                renderSavedSets(userData.savedSets || {});
-            } else {
-                const initialUserSets = {};
-                Object.keys(initialSets).forEach(key => {
-                    initialUserSets[key] = {
-                        name: initialSets[key].name,
-                        items: initialSets[key].words,
-                        wrongItems: {}
-                    };
-                });
-                setDoc(userDocRef, { savedSets: initialUserSets });
-            }
-        });
-    }
-
-    function renderSavedSets(sets) {
-        const list = $('saved-sets-list');
-        list.innerHTML = '';
-        if (Object.keys(sets).length === 0) {
-            list.innerHTML = '<li>Chưa có bộ từ nào được lưu.</li>';
-            return;
-        }
-        for (const setId in sets) {
-            const set = sets[setId];
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${set.name}</span>
-                <div>
-                    <button class="btn small ok" data-set-id="${setId}">Học</button>
-                    <button class="btn small danger" data-delete-id="${setId}">Xóa</button>
-                </div>
-            `;
-            list.appendChild(li);
-        }
-    }
-    
-    async function setupSfx() {
-        if (Tone.context.state !== 'running') {
-            await Tone.start();
-        }
-        sfx = {
-            correct: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 } }).toDestination(),
-            incorrect: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
-        };
-        console.log("Audio ready.");
-    }
-    
-    // --- EVENT LISTENERS ---
-
-    $('start-btn').onclick = async () => {
-        const name = $('player-name-input').value.trim();
-        if (name.length < 2) return alert('Tên cần có ít nhất 2 ký tự!');
-        state.player = name;
-        await setupSfx();
-        showScreen('set-selection-screen');
-    };
-
-    $('ai-generate-btn').onclick = async () => {
-        const topic = $('ai-topic-input').value.trim();
-        if (topic.length < 3) return alert("Chủ đề cần có ít nhất 3 ký tự.");
-        
-        const wordCount = $('word-count').value;
-        const sentenceCount = $('sentence-count').value;
-
-        showLoading("AI đang sáng tạo bộ từ vựng...");
-        try {
-            const response = await fetch('/.netlify/functions/generate-set', {
-                method: 'POST',
-                body: JSON.stringify({ topic, wordCount, sentenceCount })
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Lỗi không xác định từ máy chủ.');
-            if (!data || !Array.isArray(data.items)) throw new Error("AI không trả về danh sách từ vựng hợp lệ.");
-            
-            const cleanedItems = data.items.filter(item => item && item.vi && item.en && item.ko);
-            if (cleanedItems.length === 0) throw new Error("AI đã tạo một bộ từ rỗng cho chủ đề này.");
-            
-            state.tempAiSet = { name: `AI: ${topic}`, items: cleanedItems, wrongItems: {} };
-            $('save-set-topic').textContent = topic;
-            showScreen('save-set-modal');
-
-        } catch (error) {
-            console.error("AI Generation Error:", error);
-            alert(`Lỗi: ${error.message}`);
-        } finally {
-            hideLoading();
-        }
-    };
-    
-    $('confirm-save-btn').onclick = async () => {
-        if (!state.tempAiSet) return;
-        showLoading("Đang lưu...");
-        const newSetId = `ai_${Date.now()}`;
-        const userDocRef = doc(db, "users", state.userId);
-        await updateDoc(userDocRef, { [`savedSets.${newSetId}`]: state.tempAiSet });
-        hideLoading();
-        startPractice(newSetId, state.tempAiSet);
-        state.tempAiSet = null;
-    };
-
-    $('cancel-save-btn').onclick = () => {
-        if (!state.tempAiSet) return;
-        const tempSetId = `temp_${Date.now()}`;
-        startPractice(tempSetId, state.tempAiSet);
-        state.tempAiSet = null;
-    };
-
-    $('saved-sets-list').onclick = async (e) => {
-        const setId = e.target.dataset.setId;
-        const deleteId = e.target.dataset.deleteId;
-
-        if (setId) {
-            const userDocRef = doc(db, "users", state.userId);
-            const docSnap = await getDoc(userDocRef);
-            if (docSnap.exists()) {
-                const set = docSnap.data().savedSets[setId];
-                if (set) startPractice(setId, set);
-            }
-        } else if (deleteId) {
-            if (confirm(`Bạn có chắc muốn xóa bộ từ vựng này không?`)) {
-                const userDocRef = doc(db, "users", state.userId);
-                await updateDoc(userDocRef, { [`savedSets.${deleteId}`]: deleteField() });
-            }
-        }
-    };
-
-    function startPractice(setId, set) {
-        state.currentSetId = setId;
-        state.currentSet = set;
-        
-        const hasWords = set.items.some(i => i.type === 'word');
-        const hasSentences = set.items.some(i => i.type === 'sentence');
-
-        $('practice-type-screen').querySelector('[data-type="word"]').style.display = hasWords ? 'block' : 'none';
-        $('practice-type-screen').querySelector('[data-type="sentence"]').style.display = hasSentences ? 'block' : 'none';
-
-        $('practice-set-title').textContent = `Chủ đề: ${set.name}`;
-        showScreen('practice-type-screen');
-    }
-
-    $('practice-type-screen').onclick = (e) => {
-        if (e.target.dataset.type) {
-            state.practiceType = e.target.dataset.type;
-            setupGameOptions();
-            showScreen('game-setup-screen');
-        } else if (e.target.id === 'practice-type-back-btn') {
-            showScreen('set-selection-screen');
-        }
-    };
-    
-    function setupGameOptions() {
-        const wrongItems = state.currentSet.wrongItems || {};
-        const wrongItemsForType = Object.values(wrongItems).filter(item => item.type === state.practiceType);
-        const reviewCount = wrongItemsForType.length;
-
-        $('review-count').textContent = `(${reviewCount})`;
-        $('start-review-game-btn').disabled = reviewCount === 0;
-
-        const allItemsCount = state.currentSet.items.filter(i => i.type === state.practiceType).length;
-        const questionSlider = $('question-count');
-        questionSlider.max = allItemsCount > 0 ? allItemsCount : 20;
-        if (parseInt(questionSlider.value) > allItemsCount) {
-            questionSlider.value = allItemsCount;
-        }
-        $('question-count-label').textContent = questionSlider.value;
-    }
-
-    $('start-normal-game-btn').onclick = () => {
-        populateGameModes(false); // false = not review mode
-        showScreen('menu-screen');
-    };
-    
-    $('start-review-game-btn').onclick = () => {
-        populateGameModes(true); // true = review mode
-        showScreen('menu-screen');
-    };
-
-    $('game-setup-back-btn').onclick = () => showScreen('practice-type-screen');
-    
-    function populateGameModes(isReviewMode) {
-        const grid = $('game-modes-grid');
+    function populateSetSelection() {
+        const grid = $('set-selection-grid');
         grid.innerHTML = '';
-        const modeTitle = isReviewMode ? "Ôn tập từ sai" : `Luyện tập ${state.practiceType === 'word' ? 'Từ Vựng' : 'Mẫu Câu'}`;
-        $('menu-title').textContent = modeTitle;
-        
-        const modes = [
-            { id: 'quiz-image', name: 'Xem hình → chọn nghĩa', types: ['word'] },
-            { id: 'listen-image', name: 'Nghe → chọn hình', types: ['word'] },
-            { id: 'fill-letter', name: 'Điền chữ cái còn thiếu', types: ['word'] },
-            { id: 'fill-word', name: 'Điền từ vào câu', types: ['sentence'] },
-        ];
-
-        modes.filter(m => m.types.includes(state.practiceType)).forEach(mode => {
+        Object.keys(VOCABULARY_SETS).forEach(key => {
+            const set = VOCABULARY_SETS[key];
             const btn = document.createElement('button');
-            btn.className = 'btn ok';
-            btn.textContent = mode.name;
-            btn.onclick = () => startGame(mode.id, isReviewMode);
+            btn.className = 'btn';
+            btn.innerHTML = set.name;
+            btn.onclick = () => {
+                state.chosenSetKey = key;
+                $('menu-title').textContent = `Chủ đề: ${set.name}`;
+                show('menu');
+            };
             grid.appendChild(btn);
         });
     }
     
-    $('menu-back-btn').onclick = () => showScreen('game-setup-screen');
-
-    function startGame(modeId, isReviewMode) {
-        state.gameMode = modeId;
-        state.score = 0;
-        state.lives = 3;
-        
-        let sourceItems;
-        if (isReviewMode) {
-            const wrongItems = state.currentSet.wrongItems || {};
-            sourceItems = Object.values(wrongItems).filter(item => item.type === state.practiceType);
-        } else {
-            sourceItems = state.currentSet.items.filter(i => i.type === state.practiceType);
-        }
-
-        const questionCount = parseInt($('question-count').value);
-        state.currentItems = sourceItems.sort(() => 0.5 - Math.random()).slice(0, questionCount);
-        
-        if (state.currentItems.length === 0) {
-            alert("Không có từ nào để học trong chế độ này!");
-            showScreen('game-setup-screen');
+    async function unlockAudio() {
+        if(state.soundUnlocked) return;
+        try {
+            await Tone.start(); await Tone.getContext().resume();
+            sfx.click.triggerAttackRelease('C5', '16n');
+            const u = new SpeechSynthesisUtterance(''); u.volume = 0; tts.speak(u);
+            state.soundUnlocked = true;
+        } catch(e) { console.error("Audio unlock failed", e); }
+    }
+    
+    async function start(mode) {
+        state.mode = mode; state.score = 0; state.lives = 3; updateHUD();
+        await unlockAudio();
+        show('game');
+        next();
+    }
+    
+    function end() {
+        saveHS(state.player, state.score);
+        $('final-score').textContent = state.score;
+        show('end');
+    }
+    
+    async function next() {
+        if (state.lives <= 0) { return end(); }
+        state.can = true;
+        const currentSet = VOCABULARY_SETS[state.chosenSetKey];
+        if (!currentSet || !currentSet.words || currentSet.words.length === 0) {
+            alert('Bộ từ vựng này bị lỗi hoặc rỗng!');
+            show('setSelection');
             return;
         }
+        const wordObj = currentSet.words[Math.floor(Math.random() * currentSet.words.length)];
+        
+        const name = wordObj[state.questionLang];
+        const answer = wordObj[state.answerLang];
+        
+        const media = await getMedia(name, wordObj.en);
+        
+        state.curr = { ...wordObj, name, answer, media, audioElem: null };
 
-        updateHUD();
-        showScreen('game-screen');
-        nextTurn();
-    }
+        const cardFlipper = $('card-flipper');
+        const display = $('animal-display');
+        const cardBack = $('card-back');
+        const choicesArea = $('choices-area');
+        const imagePanel = $('image-panel');
+        const listenPrompt = $('listen-prompt');
+        
+        cardFlipper.classList.remove('is-flipped');
+        
+        display.innerHTML = '';
+        const img = new Image(); img.src = media.image; img.alt = name; img.referrerPolicy = 'no-referrer';
+        img.onerror = () => { display.innerHTML = '<p>😢 Lỗi ảnh</p>'; };
+        display.appendChild(img);
+        
+        const cachedDesc = descriptionCache[wordObj.vi];
+        cardBack.innerHTML = `<h3>${wordObj.vi}</h3><h4>${wordObj.en} | ${wordObj.ko}</h4><p>${cachedDesc || 'Nhấn để xem thông tin...'}</p>`;
 
-    async function nextTurn() {
-        if (state.lives <= 0 || state.currentItems.length === 0) {
-            return endGame();
-        }
-        state.canInteract = true;
-        state.currentItem = state.currentItems.pop();
+        $('media-credit').innerHTML = media.credit ? `<a href="${media.credit}" target="_blank" rel="noopener">Nguồn ảnh: Wikipedia</a>` : '';
+        $('sound-btn').disabled = !wordObj.sound;
+        if(media.audio){ const a = new Audio(media.audio); a.preload='auto'; a.crossOrigin='anonymous'; state.curr.audioElem=a; }
 
-        const questionPanel = $('question-panel');
-        const answerPanel = $('answer-panel');
-        questionPanel.innerHTML = '';
-        answerPanel.innerHTML = '';
+        choicesArea.innerHTML = '';
+        
+        // Reset styles for fill-in input
+        const fillInInput = $('fill-in-input');
+        fillInInput.classList.remove('correct', 'incorrect');
+        fillInInput.style.borderColor = 'var(--secondary)';
 
-        switch(state.gameMode) {
-            case 'quiz-image': await renderQuizImage(); break;
-            case 'listen-image': await renderListenImage(); break;
-            case 'fill-letter': renderFillLetter(); break;
-            case 'fill-word': renderFillWord(); break;
-        }
-    }
-    
-    async function getDisplayImage(item) {
-        showLoading("AI đang vẽ ảnh...");
-        try {
-            const res = await fetch('/.netlify/functions/get-image', {
-                method: 'POST', body: JSON.stringify({ item })
+
+        // Hide/show panels based on mode
+        $('choices-area').style.display = 'none';
+        $('fill-in-panel').style.display = 'none';
+        listenPrompt.style.display = 'none';
+        imagePanel.style.display = 'flex'; // Default to show image
+
+        if (state.mode === 'quiz-name') {
+            $('choices-area').style.display = 'grid';
+            choicesArea.className = 'choices-area';
+            const wrong = currentSet.words.filter(w => w[state.answerLang] !== answer).sort(()=>0.5-Math.random()).slice(0, 3).map(w => w[state.answerLang]);
+            [answer, ...wrong].sort(()=>0.5-Math.random()).forEach(n => {
+                const b=document.createElement('button'); b.className='btn choice-btn'; b.textContent=n;
+                b.onclick=()=>check(n,b); choicesArea.appendChild(b);
             });
-            if (!res.ok) throw new Error("Image fetch failed");
-            const data = await res.json();
-            return data.imageUrl;
-        } catch(e) {
-            console.error(e);
-            return `https://placehold.co/600x400/eef5ff/6b7b93?text=${encodeURIComponent(item.en)}`;
-        } finally {
-            hideLoading();
+        } else if (state.mode === 'listen-image') {
+            imagePanel.style.display = 'none';
+            listenPrompt.style.display = 'block';
+            listenPrompt.textContent = '🔊';
+            $('choices-area').style.display = 'grid';
+            choicesArea.className = 'img-grid';
+            const wrongItems = currentSet.words.filter(w => w.vi !== wordObj.vi).sort(()=>0.5-Math.random()).slice(0, 3);
+            const allItems = [wordObj, ...wrongItems].sort(()=>0.5-Math.random());
+            const itemsMedia = await Promise.all(allItems.map(async item => ({ item, media: await getMedia(item[state.questionLang], item.en) })));
+            itemsMedia.forEach(({ item, media }) => {
+                const card=document.createElement('div'); card.className='img-choice';
+                const im=new Image(); im.src = media.image; im.alt = item[state.questionLang]; im.referrerPolicy='no-referrer';
+                card.appendChild(im); card.onclick=()=>check(item[state.answerLang], card); choicesArea.appendChild(card);
+            });
+        } else if (state.mode === 'fill-word') {
+            $('fill-in-panel').style.display = 'flex';
+            fillInInput.value = '';
+            setTimeout(() => fillInInput.focus(), 100); // Auto-focus input
         }
+        
+        speak(name, state.questionLang);
     }
     
-    async function renderQuizImage() {
-        const item = state.currentItem;
-        const imageUrl = await getDisplayImage(item);
-        $('question-panel').innerHTML = `<img src="${imageUrl}" alt="${item.en}">`;
+    function check(picked, node) {
+        if(!state.can) return; state.can=false;
 
-        const choices = generateChoices(item, 3).map(choice => choice.vi);
-        const choicesGrid = document.createElement('div');
-        choicesGrid.className = 'choices-grid';
-        choices.forEach(choiceText => {
-            const btn = document.createElement('button');
-            btn.className = 'btn';
-            btn.textContent = choiceText;
-            btn.onclick = (e) => checkAnswer(choiceText === item.vi, e.target);
-            choicesGrid.appendChild(btn);
-        });
-        $('answer-panel').appendChild(choicesGrid);
-    }
-    
-    async function renderListenImage() {
-        const item = state.currentItem;
-        $('question-panel').innerHTML = `<button id="listen-again-btn">🔊</button>`;
-        $('listen-again-btn').onclick = () => speak(item.vi, 'vi');
-
-        const choices = generateChoices(item, 3);
-        const choicesGrid = document.createElement('div');
-        choicesGrid.className = 'choices-grid';
-
-        const imagePromises = choices.map(choice => getDisplayImage(choice));
-        const imageUrls = await Promise.all(imagePromises);
-
-        choices.forEach((choice, index) => {
-            const imgContainer = document.createElement('div');
-            imgContainer.className = 'img-choice';
-            imgContainer.innerHTML = `<img src="${imageUrls[index]}" alt="${choice.en}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 12px; cursor: pointer;">`;
-            imgContainer.onclick = (e) => checkAnswer(choice.vi === item.vi, e.currentTarget);
-            choicesGrid.appendChild(imgContainer);
-        });
-        $('answer-panel').appendChild(choicesGrid);
-        speak(item.vi, 'vi');
-    }
-
-    function renderFillLetter() {
-      const item = state.currentItem;
-      const word = item.vi.replace(/ /g, '');
-      const chars = [...word];
-      if (chars.length === 0) { nextTurn(); return; }
-
-      $('question-panel').innerHTML = `<p style="font-size: 1.5em; letter-spacing: 0.2em;">${item.en}</p>`;
-      
-      const missingCount = Math.max(1, Math.floor(chars.length * 0.4));
-      const missingIndices = new Set();
-      while(missingIndices.size < missingCount && missingIndices.size < chars.length) {
-        missingIndices.add(Math.floor(Math.random() * chars.length));
-      }
-
-      const slots = document.createElement('div');
-      slots.id = 'word-slots';
-      const lettersToFind = [];
-      chars.forEach((char, i) => {
-        const slot = document.createElement('div');
-        slot.className = 'slot';
-        if (missingIndices.has(i)) {
-          lettersToFind.push(char);
-        } else {
-          slot.textContent = char;
-          slot.classList.add('filled');
-        }
-        slots.appendChild(slot);
-      });
-      
-      const letterBank = document.createElement('div');
-      letterBank.id = 'letter-bank';
-      const bankChars = [...lettersToFind, ...generateRandomChars(6, lettersToFind)].sort(() => 0.5 - Math.random());
-      bankChars.forEach(char => {
-        const tile = document.createElement('div');
-        tile.className = 'letter-tile';
-        tile.textContent = char;
-        tile.onclick = () => placeLetter(tile);
-        letterBank.appendChild(tile);
-      });
-
-      const submitBtn = document.createElement('button');
-      submitBtn.className = "btn ok";
-      submitBtn.textContent = "Kiểm tra";
-      submitBtn.onclick = () => {
-          const guess = [...slots.children].map(s => s.textContent).join('');
-          checkAnswer(guess.toLowerCase() === word.toLowerCase(), submitBtn);
-      };
-      
-      const answerPanel = $('answer-panel');
-      answerPanel.append(slots, letterBank, submitBtn);
-    }
-    
-    function renderFillWord() {
-        const item = state.currentItem;
-        const parts = item.vi.split(/(\[.*?\])/).filter(p => p);
-        if (parts.length < 2) { nextTurn(); return; } // Skip malformed sentences
+        const isCorrect = picked.toLowerCase() === state.curr.answer.toLowerCase();
         
-        const blankWord = parts.find(p => p.startsWith('[')).slice(1, -1);
-        const sentenceHtml = parts.map(p => p.startsWith('[') ? '______' : `<span>${p}</span>`).join('');
-        
-        $('question-panel').innerHTML = `
-            <p style="font-size: 1.2em; margin-bottom: 1rem;">Điền từ còn thiếu:</p>
-            <h3 style="font-size: 1.5em;">${sentenceHtml}</h3>
-            <p style="font-size: 1.1em; color: #555; margin-top: 1rem;">(${item.en})</p>`;
-        
-        const otherWords = state.currentSet.items
-            .filter(i => i.type === 'word' && i.vi !== blankWord)
-            .sort(() => 0.5 - Math.random()).slice(0, 3).map(w => w.vi);
-
-        const choices = [blankWord, ...otherWords].sort(() => 0.5 - Math.random());
-        const choicesGrid = document.createElement('div');
-        choicesGrid.className = 'choices-grid';
-        choices.forEach(choiceText => {
-            const btn = document.createElement('button');
-            btn.className = 'btn';
-            btn.textContent = choiceText;
-            btn.onclick = (e) => checkAnswer(choiceText === blankWord, e.target);
-            choicesGrid.appendChild(btn);
-        });
-        $('answer-panel').appendChild(choicesGrid);
-    }
-
-    async function checkAnswer(isCorrect, element) {
-        if (!state.canInteract) return;
-        state.canInteract = false;
-
-        const userDocRef = doc(db, "users", state.userId);
-        const itemKey = state.currentItem.vi.replace(/[.#$[\]]/g, '_'); // Sanitize key for Firestore
-
         if (isCorrect) {
-            sfx.correct?.triggerAttackRelease("C5", "8n");
-            state.score += 10;
-            element.style.background = 'var(--ok)';
-            // If it was a wrong item, remove it from the list
-            if (state.currentSetId.startsWith('ai_') || state.currentSetId.startsWith('default_')) {
-                 await updateDoc(userDocRef, { [`savedSets.${state.currentSetId}.wrongItems.${itemKey}`]: deleteField() });
-            }
+            playSfx('ok'); state.score += 10;
+            node?.classList.add('correct');
+            if(state.mode === 'fill-word') node.style.borderColor = 'var(--ok)';
         } else {
-            sfx.incorrect?.triggerAttackRelease("C3", "8n");
-            state.lives -= 1;
-            element.style.background = 'var(--danger)';
-            // Add item to wrongItems list
-            if (state.currentSetId.startsWith('ai_') || state.currentSetId.startsWith('default_')) {
-                 await updateDoc(userDocRef, { [`savedSets.${state.currentSetId}.wrongItems.${itemKey}`]: state.currentItem });
-            }
+            playSfx('nope'); state.score = Math.max(0, state.score - 5); state.lives--;
+            node?.classList.add('incorrect');
+            if(state.mode === 'fill-word') node.style.borderColor = 'var(--danger)';
         }
+
         updateHUD();
-        setTimeout(nextTurn, 1500);
+        setTimeout(next, 1200);
     }
-
-    function generateChoices(correctItem, numWrong) {
-        const allPossibleItems = state.currentSet.items.filter(i => i.type === state.practiceType && i.vi !== correctItem.vi);
-        if (!Array.isArray(allPossibleItems)) return [correctItem];
-        const wrongItems = allPossibleItems.sort(() => 0.5 - Math.random()).slice(0, numWrong);
-        return [correctItem, ...wrongItems].sort(() => 0.5 - Math.random());
-    }
-
-    function placeLetter(tile) {
-        const emptySlot = document.querySelector('#word-slots .slot:not(.filled):empty');
-        if(emptySlot) {
-            emptySlot.textContent = tile.textContent;
-            emptySlot.classList.add('filled');
-            tile.classList.add('hidden');
-        }
-    }
-
-    function generateRandomChars(count, exclude) {
-        const alphabet = 'aăâbcdđeêghiklmnoôơpqrstuưvxy';
-        const result = [];
-        while(result.length < count) {
-            const char = alphabet[Math.floor(Math.random() * alphabet.length)];
-            if(!exclude.includes(char)) result.push(char);
-        }
-        return result;
-    }
-
-    function endGame() {
-        $('final-score').textContent = state.score;
-        showScreen('end-screen');
-    }
-
-    // --- Navigation & Other UI ---
-    menuToggle.onclick = () => sidebar.classList.toggle('open');
-    $('nav-learn-btn').onclick = () => showScreen('set-selection-screen');
-    $('nav-translate-btn').onclick = () => {
-        setupTranslator();
-        showScreen('translator-screen');
-    }
-    $('settings-btn').onclick = () => showScreen('settings-modal');
-    $('save-settings-btn').onclick = () => {
-        settings.voiceURI = $('voice-select').value;
-        // Find the currently visible screen to return to it
-        const currentScreen = [...allScreens].find(s => !s.classList.contains('hidden') && !s.classList.contains('modal-overlay'));
-        showScreen(currentScreen ? currentScreen.id : 'set-selection-screen');
-    }
-    $('home-btn').onclick = () => {
-        if(confirm("Bạn có chắc muốn thoát? Tiến trình sẽ không được lưu.")) {
-            showScreen('set-selection-screen');
-        }
-    };
-    $('restart-btn').onclick = () => {
-        // Find the last game mode settings to restart
-        const isReview = state.currentItems.some(item => state.currentSet.wrongItems && state.currentSet.wrongItems[item.vi.replace(/[.#$[\]]/g, '_')]);
-        startGame(state.gameMode, isReview);
-    };
-    $('to-menu-btn').onclick = () => showScreen('set-selection-screen');
     
-    // SỬA LỖI: Thêm event listeners cho sliders
-    ['word-count', 'sentence-count', 'question-count'].forEach(id => {
-        const slider = $(id);
-        const label = $(`${id}-label`);
-        if (slider && label) {
-            slider.oninput = () => label.textContent = slider.value;
-        }
-    });
-
-    // --- Translator Logic ---
-    function setupTranslator() {
-        const sourceSelect = $('source-lang-select');
-        const targetSelect = $('target-lang-select');
-        sourceSelect.innerHTML = Object.entries(availableLangs).map(([code, name]) => `<option value="${code}">${name}</option>`).join('');
-        targetSelect.innerHTML = sourceSelect.innerHTML;
-        sourceSelect.value = 'vi';
-        targetSelect.value = 'en';
+    async function getMedia(name, englishName) {
+      const cacheKey = englishName || name;
+      if (mediaCache[cacheKey]) return mediaCache[cacheKey];
+      const searchTerm = englishName || name;
+      const sURL = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`;
+      let image = null, credit = null;
+      try {
+          const res = await fetch(sURL);
+          const data = await res.json();
+          if (data.thumbnail?.source) image = data.thumbnail.source;
+          if (data.content_urls?.desktop?.page) credit = data.content_urls.desktop.page;
+      } catch (e) { console.error("Failed to fetch media", e); }
+      const result = { image: image || `https://placehold.co/600x600/eef5ff/6b7b93?text=${encodeURIComponent(name)}`, credit, audio: null };
+      mediaCache[cacheKey] = result;
+      localStorage.setItem('mediaCache', JSON.stringify(mediaCache));
+      return result;
     }
-    $('swap-lang-btn').onclick = () => {
-        const sourceSelect = $('source-lang-select');
-        const targetSelect = $('target-lang-select');
-        [sourceSelect.value, targetSelect.value] = [targetSelect.value, sourceSelect.value];
-    };
-    $('translate-btn').onclick = async () => {
-        const text = $('translator-input').value.trim();
-        const sourceLang = $('source-lang-select').value;
-        const targetLang = $('target-lang-select').value;
-        if (!text) return;
 
-        showLoading("Đang dịch...");
+    async function getCardDescription(vietnameseName) {
+        if (descriptionCache[vietnameseName]) return descriptionCache[vietnameseName];
+        
+        const functionUrl = `/.netlify/functions/get-description`;
+        $('card-back').querySelector('p').innerHTML = '<div class="loader"></div>';
+
         try {
-            const res = await fetch('/.netlify/functions/translate-text', {
+            const response = await fetch(functionUrl, {
                 method: 'POST',
-                body: JSON.stringify({ text, sourceLang, targetLang })
+                body: JSON.stringify({ name: vietnameseName })
             });
-            if (!res.ok) throw new Error('Translation failed');
-            const data = await res.json();
-            $('translator-output').textContent = data.translatedText;
-        } catch (e) {
-            console.error(e);
-            $('translator-output').textContent = "Đã xảy ra lỗi khi dịch.";
-        } finally {
-            hideLoading();
+            if (!response.ok) throw new Error(`Function error: ${response.status}`);
+            const result = await response.json();
+            const text = result.description;
+            if (text) {
+                descriptionCache[vietnameseName] = text;
+                localStorage.setItem('descriptionCache', JSON.stringify(descriptionCache));
+                return text;
+            }
+        } catch (error) {
+            console.error("Serverless function call failed:", error);
         }
-    };
+        return "Oops! Chưa có thông tin.";
+    }
 
-    // --- TTS Logic ---
+    async function speak(text, lang = 'vi') {
+        if (state.muted || !text) return;
+        if (tts.speaking) tts.cancel();
+
+        // Try to use AI TTS first
+        try {
+            const response = await fetch('/.netlify/functions/get-tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, lang })
+            });
+            if (!response.ok) throw new Error('TTS API failed');
+            const data = await response.json();
+            if (data.audio) {
+                const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
+                audio.play();
+                $('voice-indicator').textContent = `🎤: Giọng đọc AI`;
+                return; // Success, exit function
+            }
+        } catch (e) {
+            console.warn("AI TTS failed, falling back to browser's voice.", e);
+        }
+
+        // Fallback to browser's built-in TTS
+        const u = new SpeechSynthesisUtterance(text);
+        const langCodeMap = { 'vi': 'vi-VN', 'en': 'en-US', 'ko': 'ko-KR' };
+        const langCode = langCodeMap[lang] || 'vi-VN';
+        
+        u.lang = langCode;
+        u.rate = settings.rate;
+        u.pitch = settings.pitch;
+        
+        let v = voices.find(v => v.voiceURI === settings.voiceURI) || 
+                voices.find(v => v.lang === langCode && v.name.includes('Google')) ||
+                voices.find(v => v.lang === langCode);
+        
+        if (v) u.voice = v;
+        $('voice-indicator').textContent = `🎤: ${v ? v.name : 'Mặc định'}`;
+        tts.speak(u);
+    }
+
+    function spell(text, lang = 'vi') { 
+      if (!text) return;
+      const separator = lang === 'en' ? ' ' : ', ';
+      speak(Array.from(text.replace(/\s+/g, ' ').trim()).join(separator), lang); 
+    }
+    
     function populateVoices() {
       voices = tts.getVoices();
       const select = $('voice-select');
-      const voiceOptions = voices.filter(v => v.lang.startsWith('vi') || v.lang.startsWith('en') || v.lang.startsWith('ko'))
-        .map(v => `<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`).join('');
-      select.innerHTML = `<option value="auto">Tự động</option>${voiceOptions}`;
+      select.innerHTML = '<option value="auto">Tự động chọn</option>' + 
+          voices.filter(v => v.lang.startsWith('vi') || v.lang.startsWith('en') || v.lang.startsWith('ko'))
+          .map(v => `<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`).join('');
       select.value = settings.voiceURI;
     }
-
-    function speak(text, lang) {
-        if (tts.speaking) tts.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        const langCode = { 'vi': 'vi-VN', 'en': 'en-US', 'ko': 'ko-KR' }[lang];
-        u.lang = langCode;
-        
-        let voice = voices.find(v => v.voiceURI === settings.voiceURI) ||
-                    voices.find(v => v.lang === langCode && v.default) ||
-                    voices.find(v => v.lang === langCode);
-        u.voice = voice;
-        tts.speak(u);
-    }
     
-    main();
+    function showLB() {
+        const hs = JSON.parse(localStorage.getItem('highScores')||'[]');
+        $('leaderboard-list').innerHTML = hs.length? hs.map((s,i)=>`<li>#${i+1} ${s.name} - ${s.score} điểm</li>`).join('') : '<li>Chưa có ai chơi!</li>';
+        show('leaderboard');
+    }
 
+    function saveHS(name, score) {
+        if (!name) return;
+        const hs = JSON.parse(localStorage.getItem('highScores')||'[]');
+        hs.push({name, score});
+        hs.sort((a,b) => b.score - a.score);
+        localStorage.setItem('highScores', JSON.stringify(hs.slice(0, 10)));
+    }
+
+    // --- Bindings ---
+    $('start-btn').onclick = async () => {
+        const name = $('player-name-input').value.trim();
+        if (name.length < 2) {
+             $('player-name-input').style.borderColor = 'red';
+             return;
+        }
+        $('player-name-input').style.borderColor = '';
+        state.player = name;
+        await unlockAudio();
+        populateSetSelection();
+        show('setSelection');
+    };
+
+    $('generate-set-btn').onclick = async () => {
+        const topic = $('topic-input').value.trim();
+        if (!topic) {
+            alert("Vui lòng nhập một chủ đề!");
+            return;
+        }
+        const btn = $('generate-set-btn');
+        const spinner = $('loading-spinner');
+
+        btn.disabled = true;
+        spinner.style.display = 'block';
+
+        try {
+            const response = await fetch('/.netlify/functions/generate-set', {
+                method: 'POST',
+                body: JSON.stringify({ topic: topic })
+            });
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.statusText}`);
+            }
+            const data = await response.json();
+            const dynamicKey = `dynamic_${topic.replace(/\s+/g, '_')}`;
+            VOCABULARY_SETS[dynamicKey] = { name: `AI: ${topic}`, words: data.words };
+            state.chosenSetKey = dynamicKey;
+            $('menu-title').textContent = `Chủ đề: AI - ${topic}`;
+            show('menu');
+
+        } catch (error) {
+            console.error("Failed to generate set:", error);
+            alert("Rất tiếc, AI không thể tạo bộ từ vựng lúc này. Vui lòng thử lại sau!");
+        } finally {
+            btn.disabled = false;
+            spinner.style.display = 'none';
+        }
+    };
+    
+    $('question-lang').onchange = (e) => state.questionLang = e.target.value;
+    $('answer-lang').onchange = (e) => state.answerLang = e.target.value;
+
+    $('set-back-btn').onclick = () => show('start');
+    $('menu-back-btn').onclick = () => show('setSelection');
+    
+    ['mode-quiz-name', 'mode-listen-image', 'mode-fill-word'].forEach(id => {
+        $(id).onclick = () => start(id.replace('mode-', ''));
+    });
+    
+    $('fill-in-check-btn').onclick = () => {
+        const userAnswer = $('fill-in-input').value.trim();
+        if(userAnswer) check(userAnswer, $('fill-in-input'));
+    };
+    $('fill-in-input').onkeyup = (e) => {
+        if (e.key === 'Enter') $('fill-in-check-btn').click();
+    };
+
+    $('restart-btn').onclick = () => start(state.mode);
+    $('to-menu-btn').onclick = () => { populateSetSelection(); show('setSelection'); };
+    $('home-btn').onclick = () => { if(confirm("Bạn có chắc muốn thoát?")) show('menu'); };
+    
+    $('listen-btn').onclick = () => state.curr && speak(state.curr.name, state.questionLang);
+    $('spell-btn').onclick = () => state.curr && spell(state.curr.answer, state.answerLang);
+    $('sound-btn').onclick = () => {
+      if(state.curr?.sound) speak(state.curr.sound, 'vi');
+      else if (state.curr?.audioElem) state.curr.audioElem.play();
+    };
+    $('card-flipper').onclick = async () => {
+        const flipper = $('card-flipper');
+        const cardBack = $('card-back');
+        if (!flipper.classList.contains('is-flipped')) {
+            if (!descriptionCache[state.curr.vi]) {
+                const description = await getCardDescription(state.curr.vi);
+                cardBack.querySelector('p').textContent = description;
+            }
+        }
+        flipper.classList.toggle('is-flipped');
+    };
+
+    $('settings-btn').onclick = () => show('settings');
+    $('save-settings-btn').onclick = () => {
+        settings.rate = parseFloat($('rate-slider').value);
+        settings.pitch = parseFloat($('pitch-slider').value);
+        settings.voiceURI = $('voice-select').value;
+        localStorage.setItem('gameSettings', JSON.stringify(settings));
+        
+        const currentScreen = sidebar.classList.contains('game-active') ? (state.lives > 0 ? (state.mode ? 'game' : 'end') : 'end') : 'menu';
+        show(currentScreen);
+    };
+    $('mute-btn').onclick = () => {
+        state.muted = !state.muted;
+        $('mute-btn').textContent = state.muted ? '🔇 Bật tiếng' : '🔊 Tắt tiếng';
+        if(state.muted) tts.cancel();
+    };
+    $('leaderboard-btn').onclick = showLB;
+    $('close-leaderboard-btn').onclick = () => {
+      const currentScreen = sidebar.classList.contains('game-active') ? (state.lives > 0 ? (state.mode ? 'game' : 'end') : 'end') : 'menu';
+      show(currentScreen);
+    };
+
+    // --- Init ---
+    const savedSettings = JSON.parse(localStorage.getItem('gameSettings'));
+    if (savedSettings) settings = savedSettings;
+    const rateSlider = $('rate-slider'), rateValue = $('rate-value');
+    const pitchSlider = $('pitch-slider'), pitchValue = $('pitch-value');
+    rateSlider.value = settings.rate; rateValue.textContent = settings.rate;
+    pitchSlider.value = settings.pitch; pitchValue.textContent = settings.pitch;
+    rateSlider.oninput = (e) => rateValue.textContent = e.target.value;
+    pitchSlider.oninput = (e) => pitchValue.textContent = e.target.value;
+    
+    populateVoices();
+    if(tts.onvoiceschanged !== undefined) tts.onvoiceschanged = populateVoices;
+    
+    show('start');
+});
 </script>
 </body>
 </html>
-
