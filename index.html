@@ -22,29 +22,33 @@
   #sidebar{
     width: 280px; flex-shrink: 0; background: var(--sidebar-bg);
     padding: 1.5rem; display: flex; flex-direction: column;
-    box-shadow: 4px 0 20px var(--shadow-color); z-index: 10;
+    box-shadow: 4px 0 20px var(--shadow-color); z-index: 1001;
     transition: transform 0.3s ease-in-out;
   }
   #main-content{ flex: 1; position: relative; }
   
+  #menu-toggle { display: none; }
+
   @media (max-width: 768px) {
     body { flex-direction: column; }
     #sidebar { 
         width: 100%; height: auto; position: fixed; top: 0; 
-        transform: translateY(-100%); flex-direction: row; 
-        align-items: center; justify-content: space-around; 
-        padding: 0.5rem; 
+        transform: translateY(-120%); /* Start hidden further up */
+        padding: 1rem;
         box-shadow: 0 4px 10px var(--shadow-color);
     }
     #sidebar.open { transform: translateY(0); }
-    #main-content { padding-top: 70px; /* height of sidebar */ }
+    #main-content { padding-top: 0; }
     #menu-toggle {
-      display: block; position: fixed; bottom: 1rem; right: 1rem; z-index: 1000;
-      background: var(--panel); border-radius: 50%; width: 50px; height: 50px;
-      border: none; font-size: 1.5rem; box-shadow: 0 4px 10px var(--shadow-color);
+      display: block; position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 1002;
+      background: var(--accent); color: white; border-radius: 50%; width: 60px; height: 60px;
+      border: none; font-size: 1.8rem; box-shadow: 0 4px 15px var(--shadow-color);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
     .sidebar-header { display: none; }
-    .sidebar-nav { flex-direction: row !important; gap: 0.5rem !important; }
+    .sidebar-nav { flex-direction: row !important; gap: 0.5rem !important; justify-content: center; width: 100%; margin-top: 0;}
+    .sidebar-hud { display: none !important; }
+    .sidebar-nav .btn { font-size: 0.9rem; padding: 0.6em 0.8em;}
   }
 
   /* --- COMPONENTS --- */
@@ -53,7 +57,7 @@
   .hud-item { margin-bottom: 0.5rem; font-size: 1.1rem; font-weight: 700; }
   .sidebar-nav { margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; }
   .sidebar-hud, .game-controls { display: none; }
-  .game-active .sidebar-hud, .game-active .game-controls { display: block; }
+  .game-active .sidebar-hud, .game-active .game-controls { display: flex; flex-direction: column; }
   
   /* --- MÀN HÌNH (SCREEN) --- */
   .screen{
@@ -76,11 +80,16 @@
   }
   .btn:hover:not([disabled]){ transform:translateY(-2px); box-shadow:0 6px 12px var(--shadow-color); }
   .btn:active:not([disabled]){ transform:translateY(1px); box-shadow:0 2px 4px var(--shadow-color); }
+  .btn.accent { background-color: var(--accent); color: white; }
+  .btn.danger { background-color: var(--danger); color: white; }
+  .btn.ok { background-color: var(--ok); }
+  .btn.small { padding: 0.6em 1em; font-size: clamp(14px, 3vw, 16px); }
   .btn[disabled]{opacity:.5; cursor:not-allowed; }
   input, textarea, select {
     width:min(520px, 90%); padding:.8em; font-size:1.05em; text-align:center;
     border:3px solid var(--secondary); border-radius:14px; background:var(--card-bg); margin-bottom: 1rem;
   }
+  textarea { min-height: 120px; text-align: left; }
 
   /* --- Cài đặt & Sliders --- */
   .settings-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: center; width: 100%;}
@@ -124,7 +133,7 @@
   .letter-tile.hidden{ visibility:hidden; }
 
   /* --- MODALS --- */
-  .modal-overlay{ background:#00000088; z-index: 100; }
+  .modal-overlay{ background:#00000088; z-index: 1000; }
   .modal-box{ background:var(--card-bg); padding:1.5rem; border-radius:16px; width:min(500px, 90%); animation: pop-in .3s ease-out; }
   @keyframes pop-in { from { transform:scale(0.9); opacity:0; } to { transform:scale(1); opacity:1; } }
   .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: var(--secondary); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
@@ -132,7 +141,7 @@
 </head>
 <body>
 
-<button id="menu-toggle" style="display: none;">☰</button>
+<button id="menu-toggle">☰</button>
 <div id="sidebar">
     <div class="sidebar-header"> <h2>Học AI</h2> </div>
     <div class="sidebar-hud">
@@ -179,6 +188,20 @@
             <ul id="saved-sets-list"></ul>
         </div>
     </div>
+  </div>
+
+  <!-- TRANSLATE SCREEN -->
+  <div id="translate-screen" class="screen hidden">
+      <h2>Công cụ Dịch Thuật AI 🌐</h2>
+      <div class="modal-box" style="width: min(600px, 95%)">
+          <div class="settings-group" style="margin-bottom: 1rem;">
+              <select id="translate-source-lang"></select>
+              <select id="translate-target-lang"></select>
+          </div>
+          <textarea id="translate-input" placeholder="Nhập văn bản cần dịch..."></textarea>
+          <button id="translate-btn" class="btn ok">Dịch</button>
+          <div id="translate-output" style="margin-top: 1rem; padding: 1rem; background: #f0f0f0; border-radius: 8px; min-height: 50px; text-align: left;"></div>
+      </div>
   </div>
 
   <!-- LANGUAGE SELECTION -->
@@ -266,15 +289,26 @@
     import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { VOCABULARY_SETS as initialSets } from './vocabulary.js';
 
-	const firebaseConfig = {
-	  apiKey: "AIzaSyCCbca7N4rSeGGDs8Xr2yjEBgWn7ihOn-U",
-	  authDomain: "hoccungtam.firebaseapp.com",
-	  projectId: "hoccungtam",
-	  storageBucket: "hoccungtam.firebasestorage.app",
-	  messagingSenderId: "827609819388",
-	  appId: "1:827609819388:web:67cfd286094e688ff28f79",
-	  measurementId: "G-L7ZDXPNMPM"
-	};
+    // IMPORTANT: Replace this with your actual Firebase config from your project settings
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY", // Use Environment Variable
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    
+    // Check for Netlify environment variables
+    // In production, Netlify will inject these. For local dev, you'd use `netlify dev`.
+    if (window.netlify) {
+        firebaseConfig.apiKey = window.netlify.env.get('VITE_FIREBASE_API_KEY');
+        firebaseConfig.authDomain = window.netlify.env.get('VITE_FIREBASE_AUTH_DOMAIN');
+        firebaseConfig.projectId = window.netlify.env.get('VITE_FIREBASE_PROJECT_ID');
+        // ... and so on for other keys
+    } else {
+        console.warn("Firebase config is not fully secure. Use Netlify environment variables for production.");
+    }
     
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -301,6 +335,10 @@
         allScreens.forEach(s => s.classList.add('hidden'));
         $(screenId)?.classList.remove('hidden');
         sidebar.classList.toggle('game-active', ['game-screen', 'end-screen'].includes(screenId));
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            $('menu-toggle').textContent = '☰';
+        }
     }
     function showLoading(text) { $('loading-text').textContent = text; $('loading-modal').classList.remove('hidden'); }
     function hideLoading() { $('loading-modal').classList.add('hidden'); }
@@ -341,7 +379,7 @@
         list.innerHTML = '';
         Object.keys(sets).forEach(setId => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>${sets[setId].name}</span><div>
+            li.innerHTML = `<span>${sets[setId].name}</span><div style="display:flex; gap: 0.5rem;">
                 <button class="btn small ok" data-set-id="${setId}">Học</button>
                 ${setId.startsWith('default_') ? '' : `<button class="btn small danger" data-delete-id="${setId}">Xóa</button>`}
             </div>`;
@@ -415,6 +453,7 @@
         state.targetLang = $('target-lang-select').value;
         if (state.sourceLang === state.targetLang) return alert("Ngôn ngữ học và đích phải khác nhau!");
         $('practice-type-screen').querySelector('[data-type="sentence"]').style.display = state.currentSet.items.some(i => i.type === 'sentence') ? 'block' : 'none';
+        $('practice-set-title').textContent = `Chủ đề: ${state.currentSet.name}`;
         showScreen('practice-type-screen');
     };
 
@@ -461,10 +500,48 @@
         showScreen('menu-screen');
     }
     
+    $('nav-learn-btn').onclick = () => showScreen('set-selection-screen');
+    $('nav-translate-btn').onclick = () => showScreen('translate-screen');
     $('lang-select-back-btn').onclick = () => showScreen('set-selection-screen');
     $('practice-type-back-btn').onclick = () => showScreen('lang-selection-screen');
     $('game-setup-back-btn').onclick = () => showScreen('practice-type-screen');
     $('menu-back-btn').onclick = () => showScreen('game-setup-screen');
+    $('home-btn').onclick = () => showScreen('set-selection-screen');
+    $('menu-toggle').onclick = () => {
+        sidebar.classList.toggle('open');
+        $('menu-toggle').textContent = sidebar.classList.contains('open') ? '✕' : '☰';
+    };
+
+    function setupTranslateScreen() {
+        const source = $('translate-source-lang');
+        const target = $('translate-target-lang');
+        source.innerHTML = Object.entries(availableLangs).map(([c, n]) => `<option value="${c}">${n}</option>`).join('');
+        target.innerHTML = source.innerHTML;
+        source.value = 'vi';
+        target.value = 'en';
+    }
+    setupTranslateScreen();
+
+    $('translate-btn').onclick = async () => {
+        const text = $('translate-input').value.trim();
+        if(!text) return;
+        const sourceLang = $('translate-source-lang').value;
+        const targetLang = $('translate-target-lang').value;
+        const output = $('translate-output');
+        output.textContent = 'Đang dịch...';
+
+        try {
+            const res = await fetch('/.netlify/functions/translate-text', {
+                method: 'POST',
+                body: JSON.stringify({ text, sourceLang, targetLang })
+            });
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.error);
+            output.textContent = data.translatedText;
+        } catch (e) {
+            output.textContent = `Lỗi: ${e.message}`;
+        }
+    };
     
     function startGame(modeId, isReviewMode) {
         state.gameMode = modeId; state.score = 0; state.lives = 3;
@@ -664,4 +741,3 @@
 </script>
 </body>
 </html>
-
